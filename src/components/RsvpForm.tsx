@@ -26,11 +26,12 @@ import {
 import confetti from 'canvas-confetti';
 import QRCode from 'qrcode';
 import type { CreateRsvpInput, AttendanceStatus, InstitutionCategory, RsvpGuest } from '../types';
+import restoranImg from '../assets/restoran-gajahmada.jpg';
 
 const VENUE_NAME = 'Restoran Gajah Mada Pontianak';
 const VENUE_ADDRESS = 'Jl. Gajah Mada No.202, RW.65, Benua Melayu Darat, Kec. Pontianak Sel., Kota Pontianak, Kalimantan Barat 78243';
 const VENUE_MAPS_URL = 'https://www.google.com/maps/place/Restaurant+Gajah+Mada/@-0.0374499,109.3432347,17z/data=!3m1!4b1!4m6!3m5!1s0x2e1d58553a624eab:0xb1dc104ddd5dad9c!8m2!3d-0.0374499!4d109.3432347!16s%2Fg%2F1ptyc_4_2?entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D';
-const VENUE_IMAGE_URL = '/restoran-gajahmada.jpg';
+const VENUE_IMAGE_URL = restoranImg;
 
 interface RsvpFormProps {
   onSubmitRsvp: (data: CreateRsvpInput) => Promise<{ data: RsvpGuest | null; error: string | null }>;

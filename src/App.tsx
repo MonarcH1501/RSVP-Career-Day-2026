@@ -214,30 +214,30 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-slate-200 bg-white py-6 px-4 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+      <footer className="mt-auto border-t border-slate-200 bg-white py-5 px-3 sm:px-6 text-center text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 text-center sm:text-left">
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0">
               <GraduationCap className="w-3.5 h-3.5" />
             </div>
-            <span className="font-semibold text-slate-700">Career Day 2026</span>
-            <span>•</span>
-            <span>Restoran Gajah Mada Pontianak</span>
+            <span className="font-bold text-slate-800">Career Day 2026</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-slate-600">Restoran Gajah Mada</span>
           </div>
 
-          <div className="flex items-center gap-4 text-slate-400 text-[11px]">
-            <span>Universitas Mitra • Panitia Sekolah • Yayasan Gereja Protestan Kampung Bali</span>
-            <span>•</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-slate-400 text-[11px]">
+            <span className="hidden sm:inline">Univ Mitra • Panitia Sekolah • Yayasan Gereja</span>
+            <span className="hidden sm:inline">•</span>
             <button
               onClick={() => setIsDatabaseGuideOpen(true)}
-              className="text-indigo-600 hover:underline font-medium"
+              className="text-indigo-600 hover:underline font-semibold"
             >
               Info Database
             </button>
             <span>•</span>
             <button
               onClick={handleGoToAdmin}
-              className="text-slate-400 hover:text-slate-600 transition-colors"
+              className="text-slate-500 hover:text-slate-700 transition-colors font-semibold"
               title="Akses Panitia"
             >
               Portal Panitia

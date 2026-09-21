@@ -277,21 +277,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-left">
+    <div className="max-w-7xl mx-auto py-4 sm:py-8 px-3 sm:px-6 lg:px-8 text-left">
       
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-indigo-900 text-indigo-100">
-              Admin Portal Rahasia (/adminpage)
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-900 text-indigo-100">
+              Admin Portal
             </span>
-            <span className="text-xs text-slate-400 flex items-center gap-1">
+            <span className="text-xs text-slate-500 flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5 text-rose-500" />
-              Venue: Restoran Gajah Mada Pontianak
+              Restoran Gajah Mada Pontianak
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
             Dashboard Pengelolaan Tamu Makrab 2026
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
@@ -300,27 +300,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         {/* Actions bar */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={onGoToPublicPage}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition-all"
-            title="Lihat halaman formulir RSVP publik"
+            className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition-all active:scale-[0.98]"
+            title="Lihat formulir RSVP publik"
           >
             <Globe className="w-4 h-4 text-indigo-600" />
-            <span>Lihat Web Publik</span>
+            <span>Web Publik</span>
           </button>
 
           <button
             onClick={onRefresh}
             title="Muat ulang data"
-            className="p-2 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 transition-all"
+            className="p-1.5 sm:p-2 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 transition-all active:scale-[0.98]"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-indigo-600' : ''}`} />
           </button>
 
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-xs transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-xs transition-all active:scale-[0.98]"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
             <span>Export CSV</span>
@@ -328,47 +328,49 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <button
             onClick={handleOpenCreate}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-200 transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 sm:py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm shadow-indigo-200 transition-all active:scale-[0.98]"
           >
             <Plus className="w-4 h-4" />
-            <span>Tambah Tamu Manual</span>
+            <span>+ Tamu Manual</span>
           </button>
 
           <button
             onClick={onLogoutAdmin}
             title="Keluar dari mode admin"
-            className="flex items-center gap-1 px-3 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold transition-all"
+            className="flex items-center gap-1 px-3 py-1.5 sm:py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold transition-all active:scale-[0.98]"
           >
             <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Logout</span>
+            <span>Logout</span>
           </button>
         </div>
       </div>
 
-      {/* Subtab Switcher */}
-      <div className="flex items-center gap-2 bg-slate-200/60 p-1.5 rounded-2xl mb-6 w-full sm:w-fit border border-slate-200">
+      {/* Subtab Switcher (Responsive: 2 tombol sejajar di HP) */}
+      <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-200/60 p-1 sm:p-1.5 rounded-2xl mb-4 sm:mb-6 w-full sm:w-fit border border-slate-200">
         <button
           onClick={() => setAdminTab('guestbook')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
             adminTab === 'guestbook'
-              ? 'bg-white text-indigo-600 shadow-sm'
+              ? 'bg-white text-indigo-600 shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <BookOpenCheck className="w-4 h-4" />
-          <span>Presensi Buku Tamu (Meja Resepsionis)</span>
+          <BookOpenCheck className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline">Presensi Buku Tamu (Meja Resepsionis)</span>
+          <span className="sm:hidden">Buku Tamu (Presensi)</span>
         </button>
 
         <button
           onClick={() => setAdminTab('master')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
             adminTab === 'master'
-              ? 'bg-white text-indigo-600 shadow-sm'
+              ? 'bg-white text-indigo-600 shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <LayoutDashboard className="w-4 h-4" />
-          <span>Master Data & Rekap Konsumsi (CRUD)</span>
+          <LayoutDashboard className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline">Master Data & Rekap Konsumsi</span>
+          <span className="sm:hidden">Master Data (CRUD)</span>
         </button>
       </div>
 
@@ -382,56 +384,56 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       ) : (
         <>
           {/* KPI Cards Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5 mb-6">
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Undangan</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl font-black text-slate-900">{kpis.total}</span>
-            <span className="text-xs text-slate-400">Instansi</span>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5 mb-4 sm:mb-6">
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Undangan</p>
+          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+            <span className="text-xl sm:text-2xl font-black text-slate-900">{kpis.total}</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">Instansi</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-2">Univ, Sekolah, Yayasan</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">Univ, Sekolah, Yayasan</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Bisa Hadir</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl font-black text-emerald-600">{kpis.hadirCount}</span>
-            <span className="text-xs text-slate-400">Lembaga</span>
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Bisa Hadir</p>
+          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+            <span className="text-xl sm:text-2xl font-black text-emerald-600">{kpis.hadirCount}</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">Lembaga</span>
           </div>
-          <p className="text-[11px] text-emerald-600 font-medium mt-2 flex items-center gap-1">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Terkonfirmasi Hadir
+          <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-1.5 flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3 shrink-0" /> Terkonfirmasi
           </p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs bg-linear-to-br from-indigo-50/50 to-white">
-          <p className="text-[11px] font-bold text-indigo-800 uppercase tracking-wider">Pax Konsumsi</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl font-black text-indigo-700">{kpis.totalPaxHadir}</span>
-            <span className="text-xs text-indigo-500">Porsi</span>
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs bg-linear-to-br from-indigo-50/50 to-white">
+          <p className="text-[10px] sm:text-[11px] font-bold text-indigo-800 uppercase tracking-wider">Pax Konsumsi</p>
+          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+            <span className="text-xl sm:text-2xl font-black text-indigo-700">{kpis.totalPaxHadir}</span>
+            <span className="text-[11px] sm:text-xs text-indigo-500">Porsi</span>
           </div>
-          <p className="text-[11px] text-indigo-600 font-medium mt-2 flex items-center gap-1">
-            <Utensils className="w-3.5 h-3.5" /> Restoran Gajah Mada
+          <p className="text-[10px] sm:text-[11px] text-indigo-600 font-medium mt-1.5 flex items-center gap-1">
+            <Utensils className="w-3 h-3 shrink-0" /> Restoran Gajah Mada
           </p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tiba di Hotel</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl font-black text-teal-600">{kpis.checkedInCount}</span>
-            <span className="text-xs text-slate-400">/ {kpis.hadirCount}</span>
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Di Restoran</p>
+          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+            <span className="text-xl sm:text-2xl font-black text-teal-600">{kpis.checkedInCount}</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">/ {kpis.hadirCount}</span>
           </div>
-          <p className="text-[11px] text-teal-600 font-medium mt-2 flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5" /> Sudah Check-In
+          <p className="text-[10px] sm:text-[11px] text-teal-600 font-medium mt-1.5 flex items-center gap-1">
+            <Clock className="w-3 h-3 shrink-0" /> Sudah Check-In
           </p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Berhalangan</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl font-black text-rose-500">{kpis.tidakHadirCount}</span>
-            <span className="text-xs text-slate-400">Instansi</span>
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs col-span-2 sm:col-span-1">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Berhalangan</p>
+          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+            <span className="text-xl sm:text-2xl font-black text-rose-500">{kpis.tidakHadirCount}</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">Instansi</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-2">Tidak dapat hadir</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">Tidak dapat hadir</p>
         </div>
       </div>
 

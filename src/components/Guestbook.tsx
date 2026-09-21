@@ -171,18 +171,18 @@ export const Guestbook: React.FC<GuestbookProps> = ({
     <div className="text-left space-y-6">
       
       {/* Top Desk Banner & Staf Input */}
-      <div className="bg-linear-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 sm:p-6 rounded-3xl shadow-lg border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-linear-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-lg border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3.5 sm:gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              Meja Resepsionis Aktif
+              Meja Resepsionis
             </span>
             <span className="text-xs text-slate-400 flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5 text-rose-400" />
               Restoran Gajah Mada Pontianak
             </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-white">
+          <h2 className="text-lg sm:text-2xl font-black text-white">
             Buku Tamu & Presensi Delegasi
           </h2>
           <p className="text-xs text-slate-300 mt-0.5">
@@ -191,24 +191,24 @@ export const Guestbook: React.FC<GuestbookProps> = ({
         </div>
 
         {/* Input Staf Resepsionis & Tombol Aksi */}
-        <div className="flex flex-wrap items-center gap-2.5 bg-white/10 backdrop-blur-md p-2 rounded-2xl border border-white/10">
-          <div className="flex items-center gap-2 px-2.5 py-1 bg-black/20 rounded-xl">
+        <div className="flex flex-wrap items-center gap-2 bg-white/10 backdrop-blur-md p-2 rounded-2xl border border-white/10 w-full md:w-auto">
+          <div className="flex items-center gap-2 px-2.5 py-1 bg-black/20 rounded-xl flex-1 sm:flex-none">
             <UserCheck2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <div>
-              <p className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Staf Resepsionis:</p>
+              <p className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Staf Meja:</p>
               <input
                 type="text"
                 value={receptionistStaff}
                 onChange={(e) => setReceptionistStaff(e.target.value)}
                 placeholder="Nama Staf"
-                className="bg-transparent text-xs font-bold text-white border-b border-white/20 focus:border-emerald-400 outline-none w-32 py-0.5"
+                className="bg-transparent text-xs font-bold text-white border-b border-white/20 focus:border-emerald-400 outline-none w-24 sm:w-32 py-0.5"
               />
             </div>
           </div>
 
           <button
             onClick={() => setIsScannerOpen(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-black shadow-lg shadow-emerald-500/25 transition-all active:scale-[0.98]"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-black shadow-md shadow-emerald-500/25 transition-all active:scale-[0.98]"
           >
             <Camera className="w-4 h-4 text-emerald-100" />
             <span>Scan QR Presensi</span>
@@ -216,7 +216,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
 
           <button
             onClick={() => setIsWalkInModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold border border-white/20 transition-all ml-auto"
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold border border-white/20 transition-all active:scale-[0.98]"
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span>+ Walk-In</span>
@@ -225,14 +225,14 @@ export const Guestbook: React.FC<GuestbookProps> = ({
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Delegasi Tiba</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl font-black text-emerald-600">{stats.checkedInCount}</span>
-            <span className="text-xs text-slate-400">/ {stats.totalGuests} Lembaga</span>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Delegasi Tiba</p>
+          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+            <span className="text-xl sm:text-2xl font-black text-emerald-600">{stats.checkedInCount}</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">/ {stats.totalGuests}</span>
           </div>
-          <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+          <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2.5 overflow-hidden">
             <div 
               className="bg-emerald-500 h-full rounded-full transition-all duration-500"
               style={{ width: `${stats.percentage}%` }}
@@ -240,48 +240,48 @@ export const Guestbook: React.FC<GuestbookProps> = ({
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total di Lokasi</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl font-black text-indigo-600">{stats.totalPresentPax}</span>
-            <span className="text-xs text-slate-400">Pax / Orang</span>
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Hadir</p>
+          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+            <span className="text-xl sm:text-2xl font-black text-indigo-600">{stats.totalPresentPax}</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">Pax / Orang</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-2">Restoran Gajah Mada Pontianak</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">Restoran Gajah Mada</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Belum Tiba</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl font-black text-amber-500">
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Belum Tiba</p>
+          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+            <span className="text-xl sm:text-2xl font-black text-amber-500">
               {Math.max(0, guests.filter(g => g.attendance_status === 'hadir' && !g.is_checked_in).length)}
             </span>
-            <span className="text-xs text-slate-400">Instansi</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">Instansi</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-2">Ditunggu kedatangannya</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">Ditunggu kedatangan</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Persentase Hadir</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl font-black text-slate-800">{stats.percentage}%</span>
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Persentase</p>
+          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+            <span className="text-xl sm:text-2xl font-black text-slate-800">{stats.percentage}%</span>
           </div>
-          <p className="text-[11px] text-emerald-600 font-medium mt-2 flex items-center gap-1">
+          <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-1.5 flex items-center gap-1">
             <Sparkles className="w-3 h-3" /> Live Check-In
           </p>
         </div>
       </div>
 
       {/* Search & Filter Toolbar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-2.5 sm:gap-3">
         {/* Search Input */}
-        <div className="relative w-full md:w-96">
+        <div className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Cari nama kampus, PIC, no. HP, atau ID tiket..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-indigo-500 outline-none"
+            placeholder="Cari kampus, PIC, no. HP, ID..."
+            className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-indigo-500 outline-none"
           />
         </div>
 
@@ -291,19 +291,19 @@ export const Guestbook: React.FC<GuestbookProps> = ({
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
+            className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
           >
             <option value="all">Semua Kategori</option>
-            <option value="universitas">Universitas Mitra</option>
-            <option value="sekolah">Panitia Sekolah</option>
-            <option value="yayasan">Yayasan Gereja</option>
+            <option value="universitas">Universitas</option>
+            <option value="sekolah">Sekolah</option>
+            <option value="yayasan">Yayasan</option>
           </select>
 
           {/* Status Tabs */}
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
             <button
               onClick={() => setFilterTab('all')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                 filterTab === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
               }`}
             >
@@ -311,30 +311,21 @@ export const Guestbook: React.FC<GuestbookProps> = ({
             </button>
             <button
               onClick={() => setFilterTab('checked_in')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                 filterTab === 'checked_in' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500'
               }`}
             >
-              Sudah Tiba ({guests.filter(g => g.is_checked_in).length})
+              Tiba ({guests.filter(g => g.is_checked_in).length})
             </button>
             <button
               onClick={() => setFilterTab('pending')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                 filterTab === 'pending' ? 'bg-white text-amber-700 shadow-xs' : 'text-slate-500'
               }`}
             >
-              Belum Tiba ({guests.filter(g => g.attendance_status === 'hadir' && !g.is_checked_in).length})
+              Belum ({guests.filter(g => g.attendance_status === 'hadir' && !g.is_checked_in).length})
             </button>
           </div>
-
-          {/* Tombol Scan QR */}
-          <button
-            onClick={() => setIsScannerOpen(true)}
-            className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all active:scale-[0.98]"
-          >
-            <Camera className="w-3.5 h-3.5" />
-            <span>Scan QR</span>
-          </button>
         </div>
       </div>
 

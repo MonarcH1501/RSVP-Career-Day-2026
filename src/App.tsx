@@ -193,10 +193,7 @@ export function App() {
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans antialiased text-slate-800">
       
       {/* Navigation Header Bersih */}
-      <Navbar
-        databaseType={databaseType}
-        onOpenDatabaseGuide={() => setIsDatabaseGuideOpen(true)}
-      />
+      <Navbar />
 
       {/* Floating Toast Notification */}
       {toastMessage && (
@@ -228,13 +225,6 @@ export function App() {
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-slate-400 text-[11px]">
             <span className="hidden sm:inline">Univ Mitra • Panitia Sekolah • Yayasan Gereja</span>
             <span className="hidden sm:inline">•</span>
-            <button
-              onClick={() => setIsDatabaseGuideOpen(true)}
-              className="text-indigo-600 hover:underline font-semibold"
-            >
-              Info Database
-            </button>
-            <span>•</span>
             <button
               onClick={handleGoToAdmin}
               className="text-slate-500 hover:text-slate-700 transition-colors font-semibold"

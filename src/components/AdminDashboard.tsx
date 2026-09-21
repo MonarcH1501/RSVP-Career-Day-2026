@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { Guestbook } from './Guestbook';
+import { UniversityCombobox } from './UniversityCombobox';
 import type { RsvpGuest, CreateRsvpInput, UpdateRsvpInput, AttendanceStatus, InstitutionCategory } from '../types';
 
 interface AdminDashboardProps {
@@ -731,14 +732,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Nama Universitas / Lembaga *</label>
-                <input
-                  type="text"
-                  value={formData.university_name}
-                  onChange={(e) => setFormData({ ...formData, university_name: e.target.value })}
-                  placeholder="Contoh: Universitas Tanjungpura"
-                  required
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
-                />
+                {formData.institution_category === 'universitas' ? (
+                  <UniversityCombobox
+                    value={formData.university_name}
+                    onChange={(val) => setFormData({ ...formData, university_name: val })}
+                    placeholder="Ketik untuk mencari atau pilih universitas..."
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={formData.university_name}
+                    onChange={(e) => setFormData({ ...formData, university_name: e.target.value })}
+                    placeholder="Contoh: Yayasan / Panitia Sekolah"
+                    required
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
+                  />
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">

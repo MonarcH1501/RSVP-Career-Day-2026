@@ -52,3 +52,5 @@ lerna-debug.log*
 *.sln
 *.sw?
 Thumbs.db
+WhatsApp*.jpeg
+*.tmp

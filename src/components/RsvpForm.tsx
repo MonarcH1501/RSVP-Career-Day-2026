@@ -25,6 +25,7 @@ import confetti from 'canvas-confetti';
 import QRCode from 'qrcode';
 import type { CreateRsvpInput, AttendanceStatus, InstitutionCategory, RsvpGuest } from '../types';
 import restoranImg from '../assets/restoran-gajahmada.jpg';
+import { UniversityCombobox } from './UniversityCombobox';
 
 const VENUE_NAME = 'Restoran Gajah Mada Pontianak';
 const VENUE_ADDRESS = 'Jl. Gajah Mada No.202, RW.65, Benua Melayu Darat, Kec. Pontianak Sel., Kota Pontianak, Kalimantan Barat 78243';
@@ -618,29 +619,36 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
             <div className="sm:col-span-2">
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 {formData.institution_category === 'universitas'
-                  ? 'Nama Perguruan Tinggi / Universitas'
+                  ? 'Pilih atau Cari Perguruan Tinggi Mitra'
                   : formData.institution_category === 'yayasan'
                   ? 'Nama Lembaga / Yayasan'
                   : 'Unit / Panitia Sekolah'} <span className="text-rose-500">*</span>
               </label>
-              <div className="relative">
-                <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                <input
-                  type="text"
-                  name="university_name"
+              
+              {formData.institution_category === 'universitas' ? (
+                <UniversityCombobox
                   value={formData.university_name}
-                  onChange={handleChange}
-                  placeholder={
-                    formData.institution_category === 'yayasan'
-                      ? 'Yayasan Gereja Protestan Kampung Bali'
-                      : formData.institution_category === 'sekolah'
-                      ? 'Panitia Career Day Sekolah'
-                      : 'Contoh: Universitas Tanjungpura / UMN'
-                  }
-                  required
-                  className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                  onChange={(val) => setFormData((prev) => ({ ...prev, university_name: val }))}
+                  placeholder="Ketik untuk mencari atau klik untuk memilih kampus..."
                 />
-              </div>
+              ) : (
+                <div className="relative">
+                  <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  <input
+                    type="text"
+                    name="university_name"
+                    value={formData.university_name}
+                    onChange={handleChange}
+                    placeholder={
+                      formData.institution_category === 'yayasan'
+                        ? 'Yayasan Gereja Protestan Kampung Bali'
+                        : 'Panitia Career Day Sekolah'
+                    }
+                    required
+                    className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all bg-white"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Nama Lengkap Peserta */}

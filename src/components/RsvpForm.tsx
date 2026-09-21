@@ -2,11 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Building2, 
   User, 
-  Briefcase, 
   Phone, 
   Mail, 
-  Utensils, 
-  Presentation, 
   MessageSquare, 
   CheckCircle2, 
   AlertCircle, 
@@ -220,7 +217,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
               {submittedGuest.pic_name}
             </h2>
             <p className="text-indigo-100 text-xs sm:text-sm font-semibold mt-0.5">
-              {submittedGuest.university_name} {submittedGuest.pic_position ? `• ${submittedGuest.pic_position}` : ''}
+              {submittedGuest.university_name}
             </p>
 
             <div className="mt-4 pt-3 border-t border-white/20 flex flex-wrap items-center gap-2.5 sm:gap-4 text-[11px] sm:text-xs text-indigo-100">
@@ -277,9 +274,6 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nama Peserta</p>
                 <p className="font-bold text-slate-900 mt-0.5 text-xs sm:text-sm">{submittedGuest.pic_name}</p>
-                {submittedGuest.pic_position && (
-                  <p className="text-[11px] text-slate-500">{submittedGuest.pic_position}</p>
-                )}
               </div>
 
               <div>
@@ -315,9 +309,6 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Porsi Konsumsi</p>
                   <p className="font-bold text-slate-900 mt-0.5 text-xs sm:text-sm">1 Porsi (Personal)</p>
-                  {submittedGuest.dietary_requirements && (
-                    <p className="text-[11px] text-slate-500">Diet: {submittedGuest.dietary_requirements}</p>
-                  )}
                 </div>
               )}
             </div>
@@ -690,148 +681,44 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
               </div>
             </div>
 
-            {/* Jabatan (Hanya jika Hadir) */}
-            {isAttending && (
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Jabatan / Posisi
-                </label>
-                <div className="relative">
-                  <Briefcase className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                  <input
-                    type="text"
-                    name="pic_position"
-                    value={formData.pic_position}
-                    onChange={handleChange}
-                    placeholder="Contoh: Admisi / Dosen / Humas"
-                    className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                  />
-                </div>
+            {/* Email (Opsional) */}
+            <div className={isAttending ? '' : 'sm:col-span-2'}>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Email (Opsional)
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                <input
+                  type="email"
+                  name="pic_email"
+                  value={formData.pic_email}
+                  onChange={handleChange}
+                  placeholder="nama@kampus.ac.id"
+                  className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                />
               </div>
-            )}
-
-            {/* Email (Hanya jika Hadir) */}
-            {isAttending && (
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                  <input
-                    type="email"
-                    name="pic_email"
-                    value={formData.pic_email}
-                    onChange={handleChange}
-                    placeholder="nama@kampus.ac.id"
-                    className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
-                  />
-                </div>
-              </div>
-            )}
+            </div>
 
           </div>
         </div>
 
-        {/* JIKA BERHALANGAN: CUKUP PESAN SINGKAT */}
-        {!isAttending && (
-          <div className="pt-2 border-t border-slate-100">
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Pesan / Alasan Singkat (Opsional)
-            </label>
-            <div className="relative">
-              <MessageSquare className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-              <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
-                rows={2}
-                placeholder="Pesan untuk panitia sekolah dan yayasan..."
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-base sm:text-sm focus:border-indigo-500 outline-none transition-all"
-              ></textarea>
-            </div>
+        {/* CATATAN TAMBAHAN (OPSIONAL) */}
+        <div className="pt-2 border-t border-slate-100">
+          <label className="block text-xs font-bold text-slate-700 mb-1">
+            {isAttending ? 'Catatan / Pesan Tambahan (Opsional)' : 'Pesan / Alasan Singkat (Opsional)'}
+          </label>
+          <div className="relative">
+            <MessageSquare className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+            <textarea
+              name="notes"
+              value={formData.notes}
+              onChange={handleChange}
+              rows={2}
+              placeholder={isAttending ? 'Pesan untuk panitia sekolah dan yayasan...' : 'Alasan belum dapat hadir...'}
+              className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-base sm:text-sm focus:border-indigo-500 outline-none transition-all"
+            ></textarea>
           </div>
-        )}
-
-        {/* JIKA HADIR: PREFERENSI MAKANAN & MATERI */}
-        {isAttending && (
-          <>
-            <div className="space-y-3.5 sm:space-y-4 pt-3 border-t border-slate-100">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-                
-                {/* Preferensi Diet Personal */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Preferensi Makanan / Alergi Anda
-                  </label>
-                  <div className="relative">
-                    <Utensils className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                    <input
-                      type="text"
-                      name="dietary_requirements"
-                      value={formData.dietary_requirements}
-                      onChange={handleChange}
-                      placeholder="Halal, Vegetarian, Alergi, dll."
-                      className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm focus:border-indigo-500 outline-none transition-all"
-                    />
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">Disiapkan 1 porsi makan malam personal di {VENUE_NAME}.</p>
-                </div>
-
-                {/* Topik Promosi Kampus */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Materi Promosi Kampus (Untuk Siswa)
-                  </label>
-                  <div className="relative">
-                    <Presentation className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                    <input
-                      type="text"
-                      name="presentation_topic"
-                      value={formData.presentation_topic}
-                      onChange={handleChange}
-                      placeholder="Contoh: Beasiswa 2026 / Jalur Prestasi"
-                      className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm focus:border-indigo-500 outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Checkbox Fasilitas */}
-            <div className="pt-2 border-t border-slate-100 space-y-3">
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    name="needs_projector"
-                    checked={formData.needs_projector}
-                    onChange={handleChange}
-                    className="w-4 h-4 text-indigo-600 rounded-sm border-slate-300 focus:ring-indigo-500 shrink-0"
-                  />
-                  <span className="text-xs text-slate-700 font-medium">
-                    Membutuhkan Layar LCD Proyektor di {VENUE_NAME} untuk presentasi singkat
-                  </span>
-                </label>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Catatan Tambahan untuk Panitia (Opsional)
-                </label>
-                <textarea
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  rows={2}
-                  placeholder="Catatan kebutuhan meja display, standing banner, dll."
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-base sm:text-sm focus:border-indigo-500 outline-none transition-all"
-                ></textarea>
-              </div>
-            </div>
-          </>
-        )}
+        </div>
 
         {/* SUBMIT BUTTON */}
         <div className="pt-2">

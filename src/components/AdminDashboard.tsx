@@ -497,8 +497,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <th className="px-4 py-3.5">PIC & Kontak</th>
                 <th className="px-4 py-3.5 text-center">Kehadiran</th>
                 <th className="px-4 py-3.5 text-center">Pax</th>
-                <th className="px-4 py-3.5">Konsumsi / Materi</th>
-                <th className="px-4 py-3.5 text-center">Presensi (Hotel)</th>
+                <th className="px-4 py-3.5">Catatan</th>
+                <th className="px-4 py-3.5 text-center">Presensi</th>
                 <th className="px-4 py-3.5 text-right">Aksi</th>
               </tr>
             </thead>
@@ -572,22 +572,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         {guest.attendance_status === 'tidak_hadir' ? '-' : `${guest.attendee_count} pax`}
                       </td>
 
-                      {/* Konsumsi / Materi */}
+                      {/* Catatan */}
                       <td className="px-4 py-3.5 max-w-xs">
-                        {guest.dietary_requirements && (
-                          <p className="text-xs text-slate-600 truncate">
-                            <span className="font-medium text-slate-700">Diet:</span> {guest.dietary_requirements}
-                          </p>
-                        )}
-                        {guest.presentation_topic && (
-                          <p className="text-xs text-slate-500 truncate mt-0.5">
-                            <span className="font-medium text-slate-700">Materi:</span> {guest.presentation_topic}
-                          </p>
-                        )}
-                        {guest.notes && !guest.dietary_requirements && !guest.presentation_topic && (
-                          <p className="text-xs text-slate-500 italic truncate">{guest.notes}</p>
-                        )}
-                        {!guest.dietary_requirements && !guest.presentation_topic && !guest.notes && (
+                        {guest.notes ? (
+                          <p className="text-xs text-slate-600 line-clamp-2">{guest.notes}</p>
+                        ) : (
                           <span className="text-xs text-slate-400">-</span>
                         )}
                       </td>
@@ -765,19 +754,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Jabatan</label>
-                  <input
-                    type="text"
-                    value={formData.pic_position}
-                    onChange={(e) => setFormData({ ...formData, pic_position: e.target.value })}
-                    placeholder="Humas / Admisi"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
                   <label className="block font-bold text-slate-700 mb-1">No. WhatsApp *</label>
                   <input
                     type="tel"
@@ -788,6 +764,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Email</label>
                   <input
@@ -798,9 +777,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Status Kehadiran</label>
                   <select
@@ -812,6 +788,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <option value="tidak_hadir">Berhalangan Hadir</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Jumlah Pax Hadir</label>
                   <input
@@ -825,37 +804,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Rekan Pendamping</label>
-                <input
-                  type="text"
-                  value={formData.additional_attendees}
-                  onChange={(e) => setFormData({ ...formData, additional_attendees: e.target.value })}
-                  placeholder="Nama staf/rekan lain"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Konsumsi / Pantangan</label>
+                  <label className="block font-bold text-slate-700 mb-1">Rekan Pendamping</label>
                   <input
                     type="text"
-                    value={formData.dietary_requirements}
-                    onChange={(e) => setFormData({ ...formData, dietary_requirements: e.target.value })}
-                    placeholder="Halal, Vegetarian"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Materi / Topik Promosi</label>
-                  <input
-                    type="text"
-                    value={formData.presentation_topic}
-                    onChange={(e) => setFormData({ ...formData, presentation_topic: e.target.value })}
-                    placeholder="Beasiswa 2026"
+                    value={formData.additional_attendees}
+                    onChange={(e) => setFormData({ ...formData, additional_attendees: e.target.value })}
+                    placeholder="Nama staf/rekan lain"
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
                   />
                 </div>
@@ -936,15 +891,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
 
               {viewingGuest.attendance_status === 'hadir' && (
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <p className="text-slate-400 text-[10px] uppercase font-bold">Pax Konsumsi</p>
-                    <p className="font-semibold text-slate-800">{viewingGuest.attendee_count} Orang</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-400 text-[10px] uppercase font-bold">Diet / Konsumsi</p>
-                    <p className="font-semibold text-slate-800">{viewingGuest.dietary_requirements || 'Standar'}</p>
-                  </div>
+                <div>
+                  <p className="text-slate-400 text-[10px] uppercase font-bold">Pax Konsumsi</p>
+                  <p className="font-semibold text-slate-800">{viewingGuest.attendee_count} Orang (Restoran Gajah Mada)</p>
                 </div>
               )}
 
@@ -956,7 +905,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               )}
 
               <div>
-                <p className="text-slate-400 text-[10px] uppercase font-bold">Status Presensi Hotel</p>
+                <p className="text-slate-400 text-[10px] uppercase font-bold">Status Presensi (Restoran Gajah Mada)</p>
                 <p className="mt-0.5">
                   {viewingGuest.is_checked_in ? (
                     <span className="text-emerald-700 font-bold">

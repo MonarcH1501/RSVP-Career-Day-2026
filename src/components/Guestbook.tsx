@@ -383,7 +383,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                       </h3>
                       <p className="text-xs text-slate-600 mt-1 flex items-center gap-1 font-medium">
                         <UserCheck className="w-3.5 h-3.5 text-slate-400" />
-                        {guest.pic_name} {guest.pic_position ? `(${guest.pic_position})` : ''}
+                        {guest.pic_name}
                       </p>
                     </div>
 
@@ -411,11 +411,6 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                           <Users className="w-3.5 h-3.5 text-indigo-500" />
                           {guest.attendee_count} Pax
                         </span>
-                        {guest.dietary_requirements && (
-                          <span className="bg-slate-100 px-2 py-0.5 rounded-md text-[11px] text-slate-600">
-                            {guest.dietary_requirements}
-                          </span>
-                        )}
                       </div>
 
                       {guest.pic_phone && (
@@ -549,7 +544,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Nama PIC *</label>
+                  <label className="block font-bold text-slate-700 mb-1">Nama Tamu / PIC *</label>
                   <input
                     type="text"
                     value={walkInData.pic_name}
@@ -560,19 +555,6 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Jabatan</label>
-                  <input
-                    type="text"
-                    value={walkInData.pic_position}
-                    onChange={(e) => setWalkInData({ ...walkInData, pic_position: e.target.value })}
-                    placeholder="Admisi / Dosen"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:border-indigo-500 outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
                   <label className="block font-bold text-slate-700 mb-1">No. WhatsApp *</label>
                   <input
                     type="tel"
@@ -580,19 +562,6 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                     onChange={(e) => setWalkInData({ ...walkInData, pic_phone: e.target.value })}
                     placeholder="081234567890"
                     required
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:border-indigo-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Jumlah Pax</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={walkInData.attendee_count}
-                    onChange={(e) =>
-                      setWalkInData({ ...walkInData, attendee_count: Math.max(1, parseInt(e.target.value) || 1) })
-                    }
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:border-indigo-500 outline-none"
                   />
                 </div>

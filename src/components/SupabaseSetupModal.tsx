@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS public.rsvp_guests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    institution_category TEXT NOT NULL DEFAULT 'universitas',
     university_name TEXT NOT NULL,
     pic_name TEXT NOT NULL,
     pic_position TEXT DEFAULT '',
@@ -91,8 +92,9 @@ CREATE TABLE IF NOT EXISTS public.rsvp_guests (
     checked_in_by TEXT DEFAULT ''
 );
 
+-- Buka akses Row Level Security agar formulir & admin dapat membaca dan menyimpan data
 ALTER TABLE public.rsvp_guests ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public all" ON public.rsvp_guests FOR ALL USING (true);`;
+CREATE POLICY "Allow public all" ON public.rsvp_guests FOR ALL USING (true) WITH CHECK (true);`;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">

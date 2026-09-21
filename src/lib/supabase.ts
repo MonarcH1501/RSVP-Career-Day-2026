@@ -2,8 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { RsvpGuest, CreateRsvpInput, UpdateRsvpInput } from '../types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://plakmwzxtzohkcxrxmvt.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_FDEgHpTan_cfDmRXrxWw_Q_miJU9D1L';
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export type DatabaseType = 'mysql' | 'supabase' | 'local';
@@ -27,116 +27,10 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured()
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-// Mock data awal dengan perwakilan Universitas, Panitia Sekolah, & Yayasan Gereja Protestan Kampung Bali
-const INITIAL_DEMO_DATA: RsvpGuest[] = [
-  {
-    id: '1a2b3c4d-0001-4000-8000-000000000001',
-    created_at: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
-    institution_category: 'universitas',
-    university_name: 'Universitas Tanjungpura (UNTAN)',
-    pic_name: 'Dr. Hendra Gunawan',
-    pic_position: 'Tim Admisi & Humas',
-    pic_phone: '081234567890',
-    pic_email: 'admisi@untan.ac.id',
-    attendance_status: 'hadir',
-    attendee_count: 2,
-    additional_attendees: 'Dewi Sartika (Staf Promosi)',
-    dietary_requirements: 'Halal',
-    presentation_topic: 'Sosialisasi Fakultas & Program Beasiswa KIP',
-    needs_projector: true,
-    notes: 'Akan membawa standing banner kampus',
-    is_checked_in: true,
-    checked_in_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-    checked_in_by: 'Panitia Restoran Gajah Mada',
-  },
-  {
-    id: '1a2b3c4d-0002-4000-8000-000000000002',
-    created_at: new Date(Date.now() - 3600000 * 24 * 1).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 24 * 1).toISOString(),
-    institution_category: 'yayasan',
-    university_name: 'Yayasan Gereja Protestan Kampung Bali',
-    pic_name: 'Pdt. Markus Tan, M.Th',
-    pic_position: 'Ketua Yayasan',
-    pic_phone: '081398765432',
-    pic_email: 'yayasan.kampungbali@gmail.com',
-    attendance_status: 'hadir',
-    attendee_count: 2,
-    additional_attendees: 'Ibu Yohana (Sekretaris Yayasan)',
-    dietary_requirements: 'Halal / Bebas Pantangan',
-    presentation_topic: 'Sambutan & Apresiasi Kemitraan Kampus',
-    needs_projector: false,
-    notes: 'Duduk di meja kehormatan yayasan',
-    is_checked_in: false,
-    checked_in_at: null,
-    checked_in_by: '',
-  },
-  {
-    id: '1a2b3c4d-0003-4000-8000-000000000003',
-    created_at: new Date(Date.now() - 3600000 * 12).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 12).toISOString(),
-    institution_category: 'sekolah',
-    university_name: 'Panitia Career Day Sekolah',
-    pic_name: 'Bpk. Steven, S.Pd',
-    pic_position: 'Ketua Pelaksana Career Day 2026',
-    pic_phone: '085712341234',
-    pic_email: 'panitia.careerday@sekolah.sch.id',
-    attendance_status: 'hadir',
-    attendee_count: 4,
-    additional_attendees: 'Tim Acara, Tim Logistik, MC',
-    dietary_requirements: 'Halal',
-    presentation_topic: 'Koordinasi Rundown Pameran & Sesi Presentasi Siswa',
-    needs_projector: true,
-    notes: 'Briefing teknis display kampus di sekolah hari Jumat',
-    is_checked_in: true,
-    checked_in_at: new Date(Date.now() - 3600000 * 1).toISOString(),
-    checked_in_by: 'Panitia Restoran Gajah Mada',
-  },
-  {
-    id: '1a2b3c4d-0004-4000-8000-000000000004',
-    created_at: new Date(Date.now() - 3600000 * 6).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 6).toISOString(),
-    institution_category: 'universitas',
-    university_name: 'Universitas Multimedia Nusantara',
-    pic_name: 'Kevin Sanjaya',
-    pic_position: 'Marketing & Admission Officer',
-    pic_phone: '082188889999',
-    pic_email: 'kevin.s@umn.ac.id',
-    attendance_status: 'hadir',
-    attendee_count: 2,
-    additional_attendees: 'Clarissa',
-    dietary_requirements: 'Halal',
-    presentation_topic: 'Program Desain & Animasi Digital UMN',
-    needs_projector: true,
-    notes: 'Minta stopkontak demo',
-    is_checked_in: false,
-    checked_in_at: null,
-    checked_in_by: '',
-  },
-  {
-    id: '1a2b3c4d-0005-4000-8000-000000000005',
-    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-    institution_category: 'universitas',
-    university_name: 'Binus University',
-    pic_name: 'Maria Angela',
-    pic_position: 'Education Counselor',
-    pic_phone: '081900112233',
-    pic_email: 'maria.a@binus.edu',
-    attendance_status: 'tidak_hadir',
-    attendee_count: 0,
-    additional_attendees: '',
-    dietary_requirements: '',
-    presentation_topic: '',
-    needs_projector: false,
-    notes: 'Mohon maaf ada agenda bersamaan di Jakarta',
-    is_checked_in: false,
-    checked_in_at: null,
-    checked_in_by: '',
-  },
-];
+// Mock data awal kosong
+const INITIAL_DEMO_DATA: RsvpGuest[] = [];
 
-const LOCAL_STORAGE_KEY = 'rsvp_career_day_guests_v2';
+const LOCAL_STORAGE_KEY = 'rsvp_career_day_guests_v3';
 
 const getLocalGuests = (): RsvpGuest[] => {
   try {

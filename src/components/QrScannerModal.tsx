@@ -16,6 +16,7 @@ import {
 import { Html5Qrcode } from 'html5-qrcode';
 import confetti from 'canvas-confetti';
 import type { RsvpGuest } from '../types';
+import { fetchGuests } from '../lib/supabase';
 
 interface QrScannerModalProps {
   isOpen: boolean;
@@ -136,12 +137,29 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
     const allGuests = guestsRef.current;
 
     // Search by ID exact or contains
-    const foundGuest = allGuests.find(
+    let foundGuest = allGuests.find(
       (g) =>
         g.id.toLowerCase() === targetId.toLowerCase() ||
         g.id.toLowerCase().includes(targetId.toLowerCase()) ||
         rawCode.toLowerCase().includes(g.id.toLowerCase())
     );
+
+    // If not found in current state, attempt real-time fetch from database
+    if (!foundGuest) {
+      try {
+        const fresh = await fetchGuests();
+        if (fresh.data && fresh.data.length > 0) {
+          foundGuest = fresh.data.find(
+            (g) =>
+              g.id.toLowerCase() === targetId.toLowerCase() ||
+              g.id.toLowerCase().includes(targetId.toLowerCase()) ||
+              rawCode.toLowerCase().includes(g.id.toLowerCase())
+          );
+        }
+      } catch (err) {
+        console.warn('Real-time query fallback error', err);
+      }
+    }
 
     if (!foundGuest) {
       playFeedbackSound('error');

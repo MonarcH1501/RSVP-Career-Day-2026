@@ -24,6 +24,7 @@ import {
 import QRCode from 'qrcode';
 import { Guestbook } from './Guestbook';
 import { UniversityCombobox } from './UniversityCombobox';
+import logoIcon from '../assets/logoicon.png';
 import type { RsvpGuest, CreateRsvpInput, UpdateRsvpInput, AttendanceStatus, InstitutionCategory } from '../types';
 
 interface AdminDashboardProps {
@@ -282,22 +283,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <div>
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-900 text-indigo-100">
-              Admin Portal
-            </span>
-            <span className="text-xs text-slate-500 flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-rose-500" />
-              Restoran Gajah Mada Pontianak
-            </span>
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white p-1 border border-slate-200 shadow-xs flex items-center justify-center shrink-0">
+            <img src={logoIcon} alt="Logo Career Day" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Dashboard Pengelolaan Tamu Makrab 2026
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Manajemen kehadiran Delegasi Universitas, Panitia Sekolah, & Yayasan Gereja Protestan Kampung Bali.
-          </p>
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-900 text-indigo-100">
+                Admin Portal
+              </span>
+              <span className="text-xs text-slate-500 flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                Restoran Gajah Mada Pontianak
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Dashboard Pengelolaan Tamu Makrab 2026
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+              Manajemen kehadiran Delegasi Universitas, Panitia Sekolah, & Yayasan Gereja Protestan Kampung Bali.
+            </p>
+          </div>
         </div>
 
         {/* Actions bar */}

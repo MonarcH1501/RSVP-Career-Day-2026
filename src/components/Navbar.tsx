@@ -1,10 +1,10 @@
 import React from 'react';
 import { 
-  GraduationCap, 
   MapPin,
   Clock,
   ExternalLink
 } from 'lucide-react';
+import logoIcon from '../assets/logoicon.png';
 
 interface NavbarProps {
   onOpenDatabaseGuide?: () => void;
@@ -18,8 +18,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
           
           {/* Brand Logo & Event Title */}
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-linear-to-tr from-indigo-600 via-blue-600 to-teal-400 flex items-center justify-center text-white shadow-md shadow-indigo-200 shrink-0">
-              <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6" />
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white p-1 border border-slate-200/80 shadow-xs flex items-center justify-center shrink-0">
+              <img src={logoIcon} alt="Logo Career Day 2026" className="w-full h-full object-contain" />
             </div>
             <div className="text-left min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">

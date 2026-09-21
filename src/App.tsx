@@ -13,7 +13,8 @@ import {
   type DatabaseType
 } from './lib/supabase';
 import type { RsvpGuest, CreateRsvpInput, UpdateRsvpInput } from './types';
-import { GraduationCap, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
+import logoIcon from './assets/logoicon.png';
 
 export function App() {
   const checkIsAdminRoute = () => {
@@ -214,8 +215,8 @@ export function App() {
       <footer className="mt-auto border-t border-slate-200 bg-white py-5 px-3 sm:px-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 text-center sm:text-left">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0">
-              <GraduationCap className="w-3.5 h-3.5" />
+            <div className="w-6 h-6 rounded-md bg-white p-0.5 border border-slate-200/80 shadow-2xs flex items-center justify-center shrink-0">
+              <img src={logoIcon} alt="Logo Career Day" className="w-full h-full object-contain" />
             </div>
             <span className="font-bold text-slate-800">Career Day 2026</span>
             <span className="text-slate-300">•</span>

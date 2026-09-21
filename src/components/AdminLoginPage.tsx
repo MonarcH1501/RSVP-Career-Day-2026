@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { User, KeyRound, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { User, KeyRound, ArrowRight, AlertCircle } from 'lucide-react';
+import logoIcon from '../assets/logoicon.png';
 
 interface AdminLoginPageProps {
   onLoginSuccess: () => void;
@@ -42,8 +43,8 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
         
         {/* Brand */}
         <div className="text-center">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-linear-to-tr from-indigo-500 to-teal-400 flex items-center justify-center text-white mx-auto shadow-xl shadow-indigo-500/25 mb-3 sm:mb-4">
-            <ShieldCheck className="w-7 h-7 sm:w-8 sm:h-8" />
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white p-1.5 shadow-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center border border-white/20">
+            <img src={logoIcon} alt="Logo Career Day 2026" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight">
             Portal Admin Panitia

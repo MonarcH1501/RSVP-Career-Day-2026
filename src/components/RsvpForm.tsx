@@ -56,6 +56,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submittedGuest, setSubmittedGuest] = useState<RsvpGuest | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [lastSelectedUniv, setLastSelectedUniv] = useState<string>('');
 
   // Generate QR code saat form berhasil disubmit khusus jika hadir
   useEffect(() => {
@@ -100,16 +101,18 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
 
   const handleCategorySelect = (category: InstitutionCategory) => {
     setFormData((prev) => {
-      let defaultName = prev.university_name;
-      if (category === 'yayasan' && (!prev.university_name || prev.university_name.includes('Universitas'))) {
-        defaultName = 'Yayasan Gereja Protestan Kampung Bali';
-      } else if (category === 'sekolah' && (!prev.university_name || prev.university_name.includes('Yayasan'))) {
-        defaultName = 'Panitia Career Day Sekolah';
+      let nextName = '';
+      if (category === 'yayasan') {
+        nextName = 'Yayasan Gereja Protestan Kampung Bali';
+      } else if (category === 'sekolah') {
+        nextName = 'Panitia Career Day Sekolah';
+      } else if (category === 'universitas') {
+        nextName = lastSelectedUniv || '';
       }
       return {
         ...prev,
         institution_category: category,
-        university_name: defaultName,
+        university_name: nextName,
       };
     });
   };
@@ -164,6 +167,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
   const resetForm = () => {
     setSubmittedGuest(null);
     setQrCodeUrl(null);
+    setLastSelectedUniv('');
     setFormData({
       institution_category: 'universitas',
       university_name: '',
@@ -681,7 +685,10 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
               {formData.institution_category === 'universitas' ? (
                 <UniversityCombobox
                   value={formData.university_name}
-                  onChange={(val) => setFormData((prev) => ({ ...prev, university_name: val }))}
+                  onChange={(val) => {
+                    setLastSelectedUniv(val);
+                    setFormData((prev) => ({ ...prev, university_name: val }));
+                  }}
                   placeholder="Ketik untuk mencari atau klik untuk memilih kampus..."
                 />
               ) : (

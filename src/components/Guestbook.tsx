@@ -57,6 +57,23 @@ export const Guestbook: React.FC<GuestbookProps> = ({
   });
   const [isSubmittingWalkIn, setIsSubmittingWalkIn] = useState(false);
   const [walkInError, setWalkInError] = useState<string | null>(null);
+  const [walkInLastUniv, setWalkInLastUniv] = useState<string>('');
+
+  const handleWalkInCategoryChange = (category: InstitutionCategory) => {
+    let nextName = '';
+    if (category === 'yayasan') {
+      nextName = 'Yayasan Gereja Protestan Kampung Bali';
+    } else if (category === 'sekolah') {
+      nextName = 'Panitia Career Day Sekolah';
+    } else if (category === 'universitas') {
+      nextName = walkInLastUniv || '';
+    }
+    setWalkInData((prev) => ({
+      ...prev,
+      institution_category: category,
+      university_name: nextName,
+    }));
+  };
 
   // Filter and search
   const filteredGuests = useMemo(() => {
@@ -140,6 +157,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
       } else if (res.data) {
         await onCheckIn(res.data.id, true, receptionistStaff);
         setIsWalkInModalOpen(false);
+        setWalkInLastUniv('');
         setWalkInData({
           institution_category: 'universitas',
           university_name: '',
@@ -522,7 +540,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                 <label className="block font-bold text-slate-700 mb-1">Kategori Instansi</label>
                 <select
                   value={walkInData.institution_category}
-                  onChange={(e) => setWalkInData({ ...walkInData, institution_category: e.target.value as InstitutionCategory })}
+                  onChange={(e) => handleWalkInCategoryChange(e.target.value as InstitutionCategory)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 outline-none bg-white text-xs font-semibold"
                 >
                   <option value="universitas">Universitas Mitra</option>
@@ -536,7 +554,10 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                 {walkInData.institution_category === 'universitas' ? (
                   <UniversityCombobox
                     value={walkInData.university_name}
-                    onChange={(val) => setWalkInData({ ...walkInData, university_name: val })}
+                    onChange={(val) => {
+                      setWalkInLastUniv(val);
+                      setWalkInData((prev) => ({ ...prev, university_name: val }));
+                    }}
                     placeholder="Ketik untuk mencari atau pilih universitas..."
                   />
                 ) : (

@@ -82,6 +82,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [adminLastUniv, setAdminLastUniv] = useState<string>('');
+
+  const handleAdminCategoryChange = (category: InstitutionCategory) => {
+    let nextName = '';
+    if (category === 'yayasan') {
+      nextName = 'Yayasan Gereja Protestan Kampung Bali';
+    } else if (category === 'sekolah') {
+      nextName = 'Panitia Career Day Sekolah';
+    } else if (category === 'universitas') {
+      nextName = adminLastUniv || '';
+    }
+    setFormData((prev) => ({
+      ...prev,
+      institution_category: category,
+      university_name: nextName,
+    }));
+  };
 
   // Filtered list
   const filteredGuests = useMemo(() => {
@@ -141,6 +158,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleOpenEdit = (guest: RsvpGuest) => {
     setEditingGuest(guest);
+    if (guest.institution_category === 'universitas') {
+      setAdminLastUniv(guest.university_name);
+    } else {
+      setAdminLastUniv('');
+    }
     setFormData({
       institution_category: guest.institution_category,
       university_name: guest.university_name,
@@ -161,6 +183,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleOpenCreate = () => {
     setEditingGuest(null);
+    setAdminLastUniv('');
     setFormData({
       institution_category: 'universitas',
       university_name: '',
@@ -727,7 +750,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <label className="block font-bold text-slate-700 mb-1">Kategori Instansi</label>
                 <select
                   value={formData.institution_category}
-                  onChange={(e) => setFormData({ ...formData, institution_category: e.target.value as InstitutionCategory })}
+                  onChange={(e) => handleAdminCategoryChange(e.target.value as InstitutionCategory)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 outline-none bg-white font-semibold"
                 >
                   <option value="universitas">Universitas Mitra</option>
@@ -741,7 +764,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {formData.institution_category === 'universitas' ? (
                   <UniversityCombobox
                     value={formData.university_name}
-                    onChange={(val) => setFormData({ ...formData, university_name: val })}
+                    onChange={(val) => {
+                      setAdminLastUniv(val);
+                      setFormData((prev) => ({ ...prev, university_name: val }));
+                    }}
                     placeholder="Ketik untuk mencari atau pilih universitas..."
                   />
                 ) : (

@@ -19,6 +19,8 @@ import {
   BookOpenCheck,
   LayoutDashboard,
   Globe,
+  User,
+  Mail,
   QrCode as QrIcon
 } from 'lucide-react';
 import QRCode from 'qrcode';
@@ -335,71 +337,74 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div className="flex items-start gap-3 sm:gap-4">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white p-1 border border-slate-200 shadow-xs flex items-center justify-center shrink-0">
+          <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-white p-1 border border-slate-200 shadow-xs flex items-center justify-center shrink-0">
             <img src={logoIcon} alt="Logo Career Day" className="w-full h-full object-contain" />
           </div>
           <div>
-            <div className="flex flex-wrap items-center gap-2 mb-1">
+            <div className="flex flex-wrap items-center gap-1.5 mb-1">
               <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-900 text-indigo-100">
                 Admin Portal
               </span>
-              <span className="text-xs text-slate-500 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-rose-500" />
-                Restoran Gajah Mada Pontianak
+              <span className="text-[11px] sm:text-xs text-slate-500 flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                Restoran Gajah Mada
               </span>
             </div>
-            <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Dashboard Pengelolaan Tamu Makrab 2026
+            <h1 className="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight leading-tight">
+              Dashboard Tamu Makrab 2026
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-              Manajemen kehadiran Delegasi Universitas, Panitia Sekolah, & Yayasan Gereja Protestan Kampung Bali.
+            <p className="text-[11px] sm:text-sm text-slate-500 mt-0.5">
+              Universitas Mitra • Guru • Panitia Sekolah • YGPKB
             </p>
           </div>
         </div>
 
-        {/* Actions bar */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Actions bar (Grid on mobile, flex on desktop) */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
           <button
-            onClick={onGoToPublicPage}
-            className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition-all active:scale-[0.98]"
-            title="Lihat formulir RSVP publik"
+            onClick={handleOpenCreate}
+            className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 px-3.5 py-2.5 sm:py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm shadow-indigo-200 transition-all active:scale-[0.98]"
           >
-            <Globe className="w-4 h-4 text-indigo-600" />
-            <span>Web Publik</span>
-          </button>
-
-          <button
-            onClick={onRefresh}
-            title="Muat ulang data"
-            className="p-1.5 sm:p-2 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 transition-all active:scale-[0.98]"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-indigo-600' : ''}`} />
+            <Plus className="w-4 h-4" />
+            <span>+ Tambah Tamu Manual</span>
           </button>
 
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-xs transition-all active:scale-[0.98]"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-xs transition-all active:scale-[0.98]"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
             <span>Export CSV</span>
           </button>
 
           <button
-            onClick={handleOpenCreate}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 sm:py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm shadow-indigo-200 transition-all active:scale-[0.98]"
+            onClick={onGoToPublicPage}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition-all active:scale-[0.98]"
+            title="Lihat formulir RSVP publik"
           >
-            <Plus className="w-4 h-4" />
-            <span>+ Tamu Manual</span>
+            <Globe className="w-4 h-4 text-indigo-600" />
+            <span>Web Publik</span>
           </button>
 
-          <button
-            onClick={onLogoutAdmin}
-            title="Keluar dari mode admin"
-            className="flex items-center gap-1 px-3 py-1.5 sm:py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold transition-all active:scale-[0.98]"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Logout</span>
-          </button>
+          <div className="col-span-2 sm:col-span-1 flex items-center gap-2">
+            <button
+              onClick={onRefresh}
+              title="Muat ulang data"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 p-2 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 transition-all active:scale-[0.98] text-xs font-semibold"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-indigo-600' : ''}`} />
+              <span className="sm:hidden">Refresh Data</span>
+            </button>
+
+            <button
+              onClick={onLogoutAdmin}
+              title="Keluar dari mode admin"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold transition-all active:scale-[0.98]"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -496,7 +501,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs mb-4 flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 sm:gap-3">
         <div className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
@@ -508,12 +513,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full md:w-auto">
           {/* Category */}
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
+            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
           >
             <option value="all">Semua Kategori Asal</option>
             <option value="universitas">Universitas Mitra</option>
@@ -526,7 +531,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
+            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
           >
             <option value="all">Semua Status</option>
             <option value="hadir">Bisa Hadir</option>
@@ -537,7 +542,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <select
             value={checkInFilter}
             onChange={(e) => setCheckInFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
+            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
           >
             <option value="all">Semua Presensi</option>
             <option value="checked_in">Sudah Check-In</option>
@@ -546,8 +551,155 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
-      {/* Main Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      {/* MOBILE VIEW: Card List for Mobile Screens (< md) */}
+      <div className="block md:hidden space-y-3 mb-6">
+        {isLoading ? (
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400">
+            <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <p className="text-xs font-semibold">Memuat data delegasi...</p>
+          </div>
+        ) : filteredGuests.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400">
+            <p className="text-sm font-semibold text-slate-600">Tidak ada data tamu yang cocok dengan filter.</p>
+          </div>
+        ) : (
+          filteredGuests.map((guest) => {
+            const isAttending = guest.attendance_status === 'hadir';
+            return (
+              <div
+                key={guest.id}
+                className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 space-y-3 text-left transition-all"
+              >
+                {/* Header: Category Badge & Attendance Status */}
+                <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                  <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md inline-block ${
+                    guest.institution_category === 'yayasan'
+                      ? 'bg-purple-100 text-purple-700'
+                      : guest.institution_category === 'sekolah'
+                      ? (guest.university_name.toLowerCase().includes('guru') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')
+                      : 'bg-indigo-100 text-indigo-700'
+                  }`}>
+                    {guest.institution_category === 'yayasan'
+                      ? 'YGPKB'
+                      : guest.institution_category === 'sekolah'
+                      ? (guest.university_name.toLowerCase().includes('guru') ? 'Guru Sekolah' : 'Panitia Sekolah')
+                      : 'Universitas Mitra'}
+                  </span>
+
+                  {isAttending ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                      <CheckCircle2 className="w-3 h-3" /> Hadir ({guest.attendee_count} pax)
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
+                      <XCircle className="w-3 h-3" /> Berhalangan
+                    </span>
+                  )}
+                </div>
+
+                {/* Lembaga & PIC */}
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-sm leading-snug">
+                    {guest.university_name}
+                  </h3>
+                  <p className="text-xs font-bold text-slate-700 mt-1 flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span>{guest.pic_name}</span>
+                    {guest.pic_position && <span className="text-[11px] font-normal text-slate-400">({guest.pic_position})</span>}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <a
+                      href={`https://wa.me/${guest.pic_phone.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold active:scale-95 transition-all"
+                    >
+                      <Phone className="w-3 h-3 text-emerald-600" />
+                      <span>{guest.pic_phone}</span>
+                    </a>
+                    {guest.pic_email && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 truncate max-w-[170px]">
+                        <Mail className="w-3 h-3 text-slate-400 shrink-0" />
+                        {guest.pic_email}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Catatan jika ada */}
+                {guest.notes && (
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs text-slate-600 italic">
+                    <span className="font-bold not-italic text-slate-400 text-[10px] block uppercase mb-0.5">Catatan:</span>
+                    "{guest.notes}"
+                  </div>
+                )}
+
+                {/* Check-In Bar */}
+                {isAttending && (
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                    <div className="text-[11px]">
+                      <span className="text-slate-400">Presensi: </span>
+                      {guest.is_checked_in ? (
+                        <span className="font-bold text-teal-700">✓ Sudah Tiba</span>
+                      ) : (
+                        <span className="font-semibold text-slate-500">Belum Tiba</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => onCheckInToggle(guest.id, !guest.is_checked_in)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${
+                        guest.is_checked_in
+                          ? 'bg-teal-50 text-teal-700 border-teal-300 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
+                          : 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 shadow-xs'
+                      }`}
+                    >
+                      {guest.is_checked_in ? 'Batalkan Tiba' : '+ Catat Kehadiran'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Action Buttons Toolbar */}
+                <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-slate-100">
+                  <button
+                    onClick={() => handleOpenQr(guest)}
+                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-700 hover:text-indigo-600 text-[10px] font-bold active:scale-95 transition-all"
+                  >
+                    <QrIcon className="w-4 h-4 text-indigo-600" />
+                    <span>QR Tiket</span>
+                  </button>
+
+                  <button
+                    onClick={() => setViewingGuest(guest)}
+                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-700 hover:text-indigo-600 text-[10px] font-bold active:scale-95 transition-all"
+                  >
+                    <Eye className="w-4 h-4 text-indigo-600" />
+                    <span>Detail</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenEdit(guest)}
+                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 text-slate-700 hover:text-amber-700 text-[10px] font-bold active:scale-95 transition-all"
+                  >
+                    <Edit3 className="w-4 h-4 text-amber-600" />
+                    <span>Edit</span>
+                  </button>
+
+                  <button
+                    onClick={() => setDeletingGuest(guest)}
+                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-700 hover:text-rose-700 text-[10px] font-bold active:scale-95 transition-all"
+                  >
+                    <Trash2 className="w-4 h-4 text-rose-600" />
+                    <span>Hapus</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* DESKTOP VIEW: Full Data Table (Active on >= md) */}
+      <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-sm">
             <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 text-[11px] uppercase tracking-wider">
@@ -707,8 +859,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* MODAL: QR CODE */}
       {qrModalGuest && modalQrUrl && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center relative animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-sm w-full p-5 sm:p-6 text-center relative my-auto max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
             <button
               onClick={() => setQrModalGuest(null)}
               className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100"
@@ -723,7 +875,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <p className="text-xs text-slate-500 mb-4">{qrModalGuest.pic_name}</p>
 
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 inline-block mb-4">
-              <img src={modalQrUrl} alt="QR Code" className="w-52 h-52 mx-auto" />
+              <img src={modalQrUrl} alt="QR Code" className="w-48 h-48 sm:w-52 sm:h-52 mx-auto" />
             </div>
 
             <p className="text-[11px] text-slate-400 mb-4">
@@ -743,7 +895,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* MODAL: CREATE / EDIT */}
       {(isCreateModalOpen || editingGuest) && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 sm:p-8 text-left relative my-8 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-xl w-full p-5 sm:p-8 text-left relative my-auto max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
             <button
               onClick={() => {
                 setIsCreateModalOpen(false);
@@ -939,7 +1091,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* MODAL: VIEW DETAILS */}
       {viewingGuest && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8 text-left relative my-8 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full p-5 sm:p-8 text-left relative my-auto max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
             <button
               onClick={() => setViewingGuest(null)}
               className="absolute right-5 top-5 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100"
@@ -1017,8 +1169,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* MODAL: DELETE */}
       {deletingGuest && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 text-center animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-md w-full p-5 sm:p-8 text-center relative my-auto max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
             <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-6 h-6" />
             </div>

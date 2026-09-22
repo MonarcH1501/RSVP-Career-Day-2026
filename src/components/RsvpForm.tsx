@@ -363,7 +363,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
                 <p className="font-bold text-slate-900 mt-0.5 text-xs sm:text-sm">{submittedGuest.university_name}</p>
                 <span className="text-[10px] font-semibold text-indigo-600 uppercase">
                   {submittedGuest.institution_category === 'yayasan'
-                    ? 'Yayasan Gereja'
+                    ? 'YGPKB'
                     : submittedGuest.institution_category === 'sekolah'
                     ? (submittedGuest.university_name.toLowerCase().includes('guru') ? 'Guru Sekolah' : 'Panitia Sekolah')
                     : 'Universitas Mitra'}
@@ -690,7 +690,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
               }`}
             >
               <Church className="w-5 h-5 text-purple-600 shrink-0" />
-              <span className="text-[11px] sm:text-xs leading-tight font-semibold">Yayasan GPKB</span>
+              <span className="text-[11px] sm:text-xs leading-tight font-semibold">YGPKB</span>
             </button>
 
           </div>
@@ -709,7 +709,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
                   ? 'Keterangan / Bidang Guru Sekolah'
                   : selectedCategoryKey === 'panitia'
                   ? 'Divisi / Unit Panitia Sekolah'
-                  : 'Nama Lembaga / Yayasan'} <span className="text-rose-500">*</span>
+                  : 'Nama Lembaga / YGPKB'} <span className="text-rose-500">*</span>
               </label>
               
               {selectedCategoryKey === 'universitas' ? (

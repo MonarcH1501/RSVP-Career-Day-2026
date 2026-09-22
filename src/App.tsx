@@ -224,7 +224,7 @@ export function App() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-slate-400 text-[11px]">
-            <span className="hidden sm:inline">Univ Mitra • Panitia Sekolah • Yayasan Gereja</span>
+            <span className="hidden sm:inline">Univ Mitra • Guru • Panitia • YGPKB</span>
             <span className="hidden sm:inline">•</span>
             <button
               onClick={handleGoToAdmin}

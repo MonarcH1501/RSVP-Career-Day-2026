@@ -519,7 +519,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <option value="universitas">Universitas Mitra</option>
             <option value="guru">Guru Sekolah</option>
             <option value="panitia">Panitia Sekolah</option>
-            <option value="yayasan">Yayasan GPKB</option>
+            <option value="yayasan">YGPKB</option>
           </select>
 
           {/* Status */}
@@ -589,7 +589,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             : 'bg-indigo-100 text-indigo-700'
                         }`}>
                           {guest.institution_category === 'yayasan'
-                            ? 'Yayasan Gereja'
+                            ? 'YGPKB'
                             : guest.institution_category === 'sekolah'
                             ? (guest.university_name.toLowerCase().includes('guru') ? 'Guru Sekolah' : 'Panitia Sekolah')
                             : 'Universitas'}
@@ -785,7 +785,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <option value="universitas">Universitas Mitra</option>
                   <option value="guru">Guru Sekolah</option>
                   <option value="panitia">Panitia Sekolah</option>
-                  <option value="yayasan">Yayasan Gereja Protestan Kampung Bali</option>
+                  <option value="yayasan">YGPKB</option>
                 </select>
               </div>
 
@@ -797,7 +797,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     ? 'Keterangan / Bidang Guru *'
                     : adminKey === 'panitia'
                     ? 'Divisi / Unit Panitia Sekolah *'
-                    : 'Nama Lembaga / Yayasan *'}
+                    : 'Nama Lembaga / YGPKB *'}
                 </label>
                 {adminKey === 'universitas' ? (
                   <UniversityCombobox

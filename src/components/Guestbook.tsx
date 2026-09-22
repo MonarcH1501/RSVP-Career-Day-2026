@@ -334,7 +334,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
             <option value="universitas">Universitas Mitra</option>
             <option value="guru">Guru Sekolah</option>
             <option value="panitia">Panitia Sekolah</option>
-            <option value="yayasan">Yayasan GPKB</option>
+            <option value="yayasan">YGPKB</option>
           </select>
 
           {/* Status Tabs */}
@@ -410,7 +410,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                           : 'bg-indigo-100 text-indigo-700'
                       }`}>
                         {guest.institution_category === 'yayasan'
-                          ? 'Yayasan Gereja'
+                          ? 'YGPKB'
                           : guest.institution_category === 'sekolah'
                           ? (guest.university_name.toLowerCase().includes('guru') ? 'Guru Sekolah' : 'Panitia Sekolah')
                           : 'Universitas Mitra'}
@@ -565,7 +565,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                   <option value="universitas">Universitas Mitra</option>
                   <option value="guru">Guru Sekolah</option>
                   <option value="panitia">Panitia Sekolah</option>
-                  <option value="yayasan">Yayasan Gereja Protestan Kampung Bali</option>
+                  <option value="yayasan">YGPKB</option>
                 </select>
               </div>
 
@@ -577,7 +577,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                     ? 'Keterangan / Bidang Guru *'
                     : walkInKey === 'panitia'
                     ? 'Divisi / Unit Panitia Sekolah *'
-                    : 'Nama Lembaga / Yayasan *'}
+                    : 'Nama Lembaga / YGPKB *'}
                 </label>
                 {walkInKey === 'universitas' ? (
                   <UniversityCombobox

@@ -58,19 +58,30 @@ export const Guestbook: React.FC<GuestbookProps> = ({
   const [isSubmittingWalkIn, setIsSubmittingWalkIn] = useState(false);
   const [walkInError, setWalkInError] = useState<string | null>(null);
   const [walkInLastUniv, setWalkInLastUniv] = useState<string>('');
+  const [walkInKey, setWalkInKey] = useState<'universitas' | 'guru' | 'panitia' | 'yayasan'>('universitas');
 
-  const handleWalkInCategoryChange = (category: InstitutionCategory) => {
+  const handleWalkInCategoryChange = (key: 'universitas' | 'guru' | 'panitia' | 'yayasan') => {
+    setWalkInKey(key);
+    let nextCategory: InstitutionCategory = 'universitas';
     let nextName = '';
-    if (category === 'yayasan') {
+
+    if (key === 'yayasan') {
+      nextCategory = 'yayasan';
       nextName = 'Yayasan Gereja Protestan Kampung Bali';
-    } else if (category === 'sekolah') {
+    } else if (key === 'guru') {
+      nextCategory = 'sekolah';
+      nextName = 'Guru Sekolah';
+    } else if (key === 'panitia') {
+      nextCategory = 'sekolah';
       nextName = 'Panitia Career Day Sekolah';
-    } else if (category === 'universitas') {
+    } else if (key === 'universitas') {
+      nextCategory = 'universitas';
       nextName = walkInLastUniv || '';
     }
+
     setWalkInData((prev) => ({
       ...prev,
-      institution_category: category,
+      institution_category: nextCategory,
       university_name: nextName,
     }));
   };
@@ -86,7 +97,13 @@ export const Guestbook: React.FC<GuestbookProps> = ({
 
       if (!matchSearch) return false;
 
-      if (categoryFilter !== 'all' && guest.institution_category !== categoryFilter) return false;
+      if (categoryFilter !== 'all') {
+        if (categoryFilter === 'universitas' && guest.institution_category !== 'universitas') return false;
+        if (categoryFilter === 'yayasan' && guest.institution_category !== 'yayasan') return false;
+        if (categoryFilter === 'guru' && (guest.institution_category !== 'sekolah' || !guest.university_name.toLowerCase().includes('guru'))) return false;
+        if (categoryFilter === 'panitia' && (guest.institution_category !== 'sekolah' || guest.university_name.toLowerCase().includes('guru'))) return false;
+        if (categoryFilter === 'sekolah' && guest.institution_category !== 'sekolah') return false;
+      }
 
       if (filterTab === 'checked_in') return guest.is_checked_in;
       if (filterTab === 'pending') return !guest.is_checked_in && guest.attendance_status !== 'tidak_hadir';
@@ -158,6 +175,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
         await onCheckIn(res.data.id, true, receptionistStaff);
         setIsWalkInModalOpen(false);
         setWalkInLastUniv('');
+        setWalkInKey('universitas');
         setWalkInData({
           institution_category: 'universitas',
           university_name: '',
@@ -313,9 +331,10 @@ export const Guestbook: React.FC<GuestbookProps> = ({
             className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
           >
             <option value="all">Semua Kategori</option>
-            <option value="universitas">Universitas</option>
-            <option value="sekolah">Sekolah</option>
-            <option value="yayasan">Yayasan</option>
+            <option value="universitas">Universitas Mitra</option>
+            <option value="guru">Guru Sekolah</option>
+            <option value="panitia">Panitia Sekolah</option>
+            <option value="yayasan">Yayasan GPKB</option>
           </select>
 
           {/* Status Tabs */}
@@ -387,13 +406,13 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                         guest.institution_category === 'yayasan'
                           ? 'bg-purple-100 text-purple-700'
                           : guest.institution_category === 'sekolah'
-                          ? 'bg-blue-100 text-blue-700'
+                          ? (guest.university_name.toLowerCase().includes('guru') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')
                           : 'bg-indigo-100 text-indigo-700'
                       }`}>
                         {guest.institution_category === 'yayasan'
                           ? 'Yayasan Gereja'
                           : guest.institution_category === 'sekolah'
-                          ? 'Panitia Sekolah'
+                          ? (guest.university_name.toLowerCase().includes('guru') ? 'Guru Sekolah' : 'Panitia Sekolah')
                           : 'Universitas Mitra'}
                       </span>
 
@@ -539,19 +558,28 @@ export const Guestbook: React.FC<GuestbookProps> = ({
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Kategori Instansi</label>
                 <select
-                  value={walkInData.institution_category}
-                  onChange={(e) => handleWalkInCategoryChange(e.target.value as InstitutionCategory)}
+                  value={walkInKey}
+                  onChange={(e) => handleWalkInCategoryChange(e.target.value as 'universitas' | 'guru' | 'panitia' | 'yayasan')}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 outline-none bg-white text-xs font-semibold"
                 >
                   <option value="universitas">Universitas Mitra</option>
-                  <option value="sekolah">Panitia Sekolah</option>
+                  <option value="guru">Guru Sekolah</option>
+                  <option value="panitia">Panitia Sekolah</option>
                   <option value="yayasan">Yayasan Gereja Protestan Kampung Bali</option>
                 </select>
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Nama Universitas / Lembaga *</label>
-                {walkInData.institution_category === 'universitas' ? (
+                <label className="block font-bold text-slate-700 mb-1">
+                  {walkInKey === 'universitas'
+                    ? 'Nama Universitas *'
+                    : walkInKey === 'guru'
+                    ? 'Keterangan / Bidang Guru *'
+                    : walkInKey === 'panitia'
+                    ? 'Divisi / Unit Panitia Sekolah *'
+                    : 'Nama Lembaga / Yayasan *'}
+                </label>
+                {walkInKey === 'universitas' ? (
                   <UniversityCombobox
                     value={walkInData.university_name}
                     onChange={(val) => {
@@ -565,7 +593,13 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                     type="text"
                     value={walkInData.university_name}
                     onChange={(e) => setWalkInData({ ...walkInData, university_name: e.target.value })}
-                    placeholder="Contoh: Yayasan / Panitia Sekolah"
+                    placeholder={
+                      walkInKey === 'guru'
+                        ? 'Guru Sekolah / Guru BK / Guru Mata Pelajaran'
+                        : walkInKey === 'panitia'
+                        ? 'Panitia Career Day Sekolah'
+                        : 'Yayasan Gereja Protestan Kampung Bali'
+                    }
                     required
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:border-indigo-500 outline-none"
                   />

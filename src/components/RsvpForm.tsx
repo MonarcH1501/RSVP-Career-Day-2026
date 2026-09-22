@@ -16,16 +16,19 @@ import {
   Printer,
   RotateCcw,
   Church,
-  School,
   GraduationCap,
   ExternalLink,
-  Download
+  Download,
+  BookOpen,
+  Users
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import QRCode from 'qrcode';
 import type { CreateRsvpInput, AttendanceStatus, InstitutionCategory, RsvpGuest } from '../types';
 import restoranImg from '../assets/restoran-gajahmada.jpg';
 import { UniversityCombobox } from './UniversityCombobox';
+
+export type CategoryOptionKey = 'universitas' | 'guru' | 'panitia' | 'yayasan';
 
 const VENUE_NAME = 'Restoran Gajah Mada Pontianak';
 const VENUE_ADDRESS = 'Jl. Gajah Mada No.202, RW.65, Benua Melayu Darat, Kec. Pontianak Sel., Kota Pontianak, Kalimantan Barat 78243';
@@ -57,6 +60,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
   const [submittedGuest, setSubmittedGuest] = useState<RsvpGuest | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [lastSelectedUniv, setLastSelectedUniv] = useState<string>('');
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState<CategoryOptionKey>('universitas');
 
   // Generate QR code saat form berhasil disubmit khusus jika hadir
   useEffect(() => {
@@ -99,19 +103,29 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
     setFormData((prev) => ({ ...prev, attendance_status: status }));
   };
 
-  const handleCategorySelect = (category: InstitutionCategory) => {
+  const handleCategoryOptionSelect = (key: CategoryOptionKey) => {
+    setSelectedCategoryKey(key);
     setFormData((prev) => {
+      let nextCategory: InstitutionCategory = 'universitas';
       let nextName = '';
-      if (category === 'yayasan') {
-        nextName = 'Yayasan Gereja Protestan Kampung Bali';
-      } else if (category === 'sekolah') {
-        nextName = 'Panitia Career Day Sekolah';
-      } else if (category === 'universitas') {
+
+      if (key === 'universitas') {
+        nextCategory = 'universitas';
         nextName = lastSelectedUniv || '';
+      } else if (key === 'guru') {
+        nextCategory = 'sekolah';
+        nextName = 'Guru Sekolah';
+      } else if (key === 'panitia') {
+        nextCategory = 'sekolah';
+        nextName = 'Panitia Career Day Sekolah';
+      } else if (key === 'yayasan') {
+        nextCategory = 'yayasan';
+        nextName = 'Yayasan Gereja Protestan Kampung Bali';
       }
+
       return {
         ...prev,
-        institution_category: category,
+        institution_category: nextCategory,
         university_name: nextName,
       };
     });
@@ -168,6 +182,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
     setSubmittedGuest(null);
     setQrCodeUrl(null);
     setLastSelectedUniv('');
+    setSelectedCategoryKey('universitas');
     setFormData({
       institution_category: 'universitas',
       university_name: '',
@@ -350,8 +365,8 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
                   {submittedGuest.institution_category === 'yayasan'
                     ? 'Yayasan Gereja'
                     : submittedGuest.institution_category === 'sekolah'
-                    ? 'Panitia Sekolah'
-                    : 'Universitas'}
+                    ? (submittedGuest.university_name.toLowerCase().includes('guru') ? 'Guru Sekolah' : 'Panitia Sekolah')
+                    : 'Universitas Mitra'}
                 </span>
               </div>
 
@@ -452,7 +467,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
 
           <p className="mt-2.5 text-slate-300 text-xs sm:text-sm leading-relaxed max-w-2xl">
             Persiapan pameran Career Day siswa-siswi sekolah bersama perwakilan 
-            <strong> Perguruan Tinggi Mitra</strong>, <strong>Panitia Sekolah</strong>, dan <strong>Yayasan Gereja Protestan Kampung Bali</strong>.
+            <strong> Perguruan Tinggi Mitra</strong>, <strong>Bapak/Ibu Guru & Panitia Sekolah</strong>, serta <strong>Yayasan Gereja Protestan Kampung Bali</strong>.
           </p>
 
           <p className="text-[11px] text-indigo-200 bg-white/10 px-3 py-1.5 rounded-xl border border-white/10 mt-3 inline-block">
@@ -619,50 +634,63 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
           </div>
         </div>
 
-        {/* SECTION 2: Kategori Asal Delegasi (3 Kolom Compact di HP) */}
+        {/* SECTION 2: Kategori Asal Delegasi (4 Kolom Grid di Desktop, 2 Kolom di HP) */}
         <div className="pt-3 border-t border-slate-100">
           <label className="block text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
             Kategori Asal Delegasi <span className="text-rose-500">*</span>
           </label>
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
             
             <button
               type="button"
-              onClick={() => handleCategorySelect('universitas')}
+              onClick={() => handleCategoryOptionSelect('universitas')}
               className={`p-2.5 sm:p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
-                formData.institution_category === 'universitas'
-                  ? 'bg-indigo-50/90 border-indigo-500 text-indigo-900 font-bold ring-2 ring-indigo-400/20'
+                selectedCategoryKey === 'universitas'
+                  ? 'bg-indigo-50/90 border-indigo-500 text-indigo-900 font-bold ring-2 ring-indigo-400/20 shadow-xs'
                   : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
               <GraduationCap className="w-5 h-5 text-indigo-600 shrink-0" />
-              <span className="text-[11px] sm:text-xs leading-tight">Universitas</span>
+              <span className="text-[11px] sm:text-xs leading-tight font-semibold">Universitas Mitra</span>
             </button>
 
             <button
               type="button"
-              onClick={() => handleCategorySelect('sekolah')}
+              onClick={() => handleCategoryOptionSelect('guru')}
               className={`p-2.5 sm:p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
-                formData.institution_category === 'sekolah'
-                  ? 'bg-indigo-50/90 border-indigo-500 text-indigo-900 font-bold ring-2 ring-indigo-400/20'
+                selectedCategoryKey === 'guru'
+                  ? 'bg-emerald-50/90 border-emerald-500 text-emerald-900 font-bold ring-2 ring-emerald-400/20 shadow-xs'
                   : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
-              <School className="w-5 h-5 text-indigo-600 shrink-0" />
-              <span className="text-[11px] sm:text-xs leading-tight">Sekolah</span>
+              <BookOpen className="w-5 h-5 text-emerald-600 shrink-0" />
+              <span className="text-[11px] sm:text-xs leading-tight font-semibold">Guru Sekolah</span>
             </button>
 
             <button
               type="button"
-              onClick={() => handleCategorySelect('yayasan')}
+              onClick={() => handleCategoryOptionSelect('panitia')}
               className={`p-2.5 sm:p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
-                formData.institution_category === 'yayasan'
-                  ? 'bg-indigo-50/90 border-indigo-500 text-indigo-900 font-bold ring-2 ring-indigo-400/20'
+                selectedCategoryKey === 'panitia'
+                  ? 'bg-amber-50/90 border-amber-500 text-amber-900 font-bold ring-2 ring-amber-400/20 shadow-xs'
                   : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
-              <Church className="w-5 h-5 text-indigo-600 shrink-0" />
-              <span className="text-[11px] sm:text-xs leading-tight">Yayasan</span>
+              <Users className="w-5 h-5 text-amber-600 shrink-0" />
+              <span className="text-[11px] sm:text-xs leading-tight font-semibold">Panitia Sekolah</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleCategoryOptionSelect('yayasan')}
+              className={`p-2.5 sm:p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
+                selectedCategoryKey === 'yayasan'
+                  ? 'bg-purple-50/90 border-purple-500 text-purple-900 font-bold ring-2 ring-purple-400/20 shadow-xs'
+                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <Church className="w-5 h-5 text-purple-600 shrink-0" />
+              <span className="text-[11px] sm:text-xs leading-tight font-semibold">Yayasan GPKB</span>
             </button>
 
           </div>
@@ -675,14 +703,16 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
             {/* Nama Univ / Instansi */}
             <div className="sm:col-span-2">
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                {formData.institution_category === 'universitas'
+                {selectedCategoryKey === 'universitas'
                   ? 'Pilih atau Cari Perguruan Tinggi Mitra'
-                  : formData.institution_category === 'yayasan'
-                  ? 'Nama Lembaga / Yayasan'
-                  : 'Unit / Panitia Sekolah'} <span className="text-rose-500">*</span>
+                  : selectedCategoryKey === 'guru'
+                  ? 'Keterangan / Bidang Guru Sekolah'
+                  : selectedCategoryKey === 'panitia'
+                  ? 'Divisi / Unit Panitia Sekolah'
+                  : 'Nama Lembaga / Yayasan'} <span className="text-rose-500">*</span>
               </label>
               
-              {formData.institution_category === 'universitas' ? (
+              {selectedCategoryKey === 'universitas' ? (
                 <UniversityCombobox
                   value={formData.university_name}
                   onChange={(val) => {
@@ -700,9 +730,11 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
                     value={formData.university_name}
                     onChange={handleChange}
                     placeholder={
-                      formData.institution_category === 'yayasan'
-                        ? 'Yayasan Gereja Protestan Kampung Bali'
-                        : 'Panitia Career Day Sekolah'
+                      selectedCategoryKey === 'guru'
+                        ? 'Guru Sekolah / Guru BK / Guru Mata Pelajaran'
+                        : selectedCategoryKey === 'panitia'
+                        ? 'Panitia Career Day Sekolah'
+                        : 'Yayasan Gereja Protestan Kampung Bali'
                     }
                     required
                     className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all bg-white"

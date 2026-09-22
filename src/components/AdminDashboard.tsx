@@ -83,19 +83,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [adminLastUniv, setAdminLastUniv] = useState<string>('');
+  const [adminKey, setAdminKey] = useState<'universitas' | 'guru' | 'panitia' | 'yayasan'>('universitas');
 
-  const handleAdminCategoryChange = (category: InstitutionCategory) => {
+  const handleAdminCategoryChange = (key: 'universitas' | 'guru' | 'panitia' | 'yayasan') => {
+    setAdminKey(key);
+    let nextCategory: InstitutionCategory = 'universitas';
     let nextName = '';
-    if (category === 'yayasan') {
+
+    if (key === 'yayasan') {
+      nextCategory = 'yayasan';
       nextName = 'Yayasan Gereja Protestan Kampung Bali';
-    } else if (category === 'sekolah') {
+    } else if (key === 'guru') {
+      nextCategory = 'sekolah';
+      nextName = 'Guru Sekolah';
+    } else if (key === 'panitia') {
+      nextCategory = 'sekolah';
       nextName = 'Panitia Career Day Sekolah';
-    } else if (category === 'universitas') {
+    } else if (key === 'universitas') {
+      nextCategory = 'universitas';
       nextName = adminLastUniv || '';
     }
+
     setFormData((prev) => ({
       ...prev,
-      institution_category: category,
+      institution_category: nextCategory,
       university_name: nextName,
     }));
   };
@@ -111,7 +122,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       if (!matchSearch) return false;
 
-      if (categoryFilter !== 'all' && g.institution_category !== categoryFilter) return false;
+      if (categoryFilter !== 'all') {
+        if (categoryFilter === 'universitas' && g.institution_category !== 'universitas') return false;
+        if (categoryFilter === 'yayasan' && g.institution_category !== 'yayasan') return false;
+        if (categoryFilter === 'guru' && (g.institution_category !== 'sekolah' || !g.university_name.toLowerCase().includes('guru'))) return false;
+        if (categoryFilter === 'panitia' && (g.institution_category !== 'sekolah' || g.university_name.toLowerCase().includes('guru'))) return false;
+        if (categoryFilter === 'sekolah' && g.institution_category !== 'sekolah') return false;
+      }
+
       if (statusFilter !== 'all' && g.attendance_status !== statusFilter) return false;
       if (checkInFilter === 'checked_in' && !g.is_checked_in) return false;
       if (checkInFilter === 'not_checked_in' && g.is_checked_in) return false;
@@ -159,8 +177,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleOpenEdit = (guest: RsvpGuest) => {
     setEditingGuest(guest);
     if (guest.institution_category === 'universitas') {
+      setAdminKey('universitas');
       setAdminLastUniv(guest.university_name);
+    } else if (guest.institution_category === 'yayasan') {
+      setAdminKey('yayasan');
+      setAdminLastUniv('');
     } else {
+      if (guest.university_name.toLowerCase().includes('guru')) {
+        setAdminKey('guru');
+      } else {
+        setAdminKey('panitia');
+      }
       setAdminLastUniv('');
     }
     setFormData({
@@ -183,6 +210,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleOpenCreate = () => {
     setEditingGuest(null);
+    setAdminKey('universitas');
     setAdminLastUniv('');
     setFormData({
       institution_category: 'universitas',
@@ -489,8 +517,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <option value="all">Semua Kategori Asal</option>
             <option value="universitas">Universitas Mitra</option>
-            <option value="sekolah">Panitia Sekolah</option>
-            <option value="yayasan">Yayasan Gereja</option>
+            <option value="guru">Guru Sekolah</option>
+            <option value="panitia">Panitia Sekolah</option>
+            <option value="yayasan">Yayasan GPKB</option>
           </select>
 
           {/* Status */}
@@ -556,13 +585,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           guest.institution_category === 'yayasan'
                             ? 'bg-purple-100 text-purple-700'
                             : guest.institution_category === 'sekolah'
-                            ? 'bg-blue-100 text-blue-700'
+                            ? (guest.university_name.toLowerCase().includes('guru') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')
                             : 'bg-indigo-100 text-indigo-700'
                         }`}>
                           {guest.institution_category === 'yayasan'
                             ? 'Yayasan Gereja'
                             : guest.institution_category === 'sekolah'
-                            ? 'Panitia Sekolah'
+                            ? (guest.university_name.toLowerCase().includes('guru') ? 'Guru Sekolah' : 'Panitia Sekolah')
                             : 'Universitas'}
                         </span>
                         <p className="font-bold text-slate-900">{guest.university_name}</p>
@@ -749,19 +778,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Kategori Instansi</label>
                 <select
-                  value={formData.institution_category}
-                  onChange={(e) => handleAdminCategoryChange(e.target.value as InstitutionCategory)}
+                  value={adminKey}
+                  onChange={(e) => handleAdminCategoryChange(e.target.value as 'universitas' | 'guru' | 'panitia' | 'yayasan')}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 outline-none bg-white font-semibold"
                 >
                   <option value="universitas">Universitas Mitra</option>
-                  <option value="sekolah">Panitia Sekolah</option>
+                  <option value="guru">Guru Sekolah</option>
+                  <option value="panitia">Panitia Sekolah</option>
                   <option value="yayasan">Yayasan Gereja Protestan Kampung Bali</option>
                 </select>
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Nama Universitas / Lembaga *</label>
-                {formData.institution_category === 'universitas' ? (
+                <label className="block font-bold text-slate-700 mb-1">
+                  {adminKey === 'universitas'
+                    ? 'Nama Universitas / Lembaga *'
+                    : adminKey === 'guru'
+                    ? 'Keterangan / Bidang Guru *'
+                    : adminKey === 'panitia'
+                    ? 'Divisi / Unit Panitia Sekolah *'
+                    : 'Nama Lembaga / Yayasan *'}
+                </label>
+                {adminKey === 'universitas' ? (
                   <UniversityCombobox
                     value={formData.university_name}
                     onChange={(val) => {
@@ -775,7 +813,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={formData.university_name}
                     onChange={(e) => setFormData({ ...formData, university_name: e.target.value })}
-                    placeholder="Contoh: Yayasan / Panitia Sekolah"
+                    placeholder={
+                      adminKey === 'guru'
+                        ? 'Guru Sekolah / Guru BK / Guru Mata Pelajaran'
+                        : adminKey === 'panitia'
+                        ? 'Panitia Career Day Sekolah'
+                        : 'Yayasan Gereja Protestan Kampung Bali'
+                    }
                     required
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
                   />

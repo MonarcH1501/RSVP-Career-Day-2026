@@ -26,7 +26,7 @@ interface QrScannerModalProps {
   onCheckIn: (id: string, isCheckedIn: boolean, checkedInBy?: string) => Promise<void>;
 }
 
-type ScanStatus = 'idle' | 'success' | 'already_checked_in' | 'not_found' | 'error';
+type ScanStatus = 'idle' | 'success' | 'already_checked_in' | 'not_found' | 'error' | 'warning';
 
 interface ScanResult {
   status: ScanStatus;
@@ -167,6 +167,45 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
         status: 'not_found',
         rawText: rawCode,
         message: 'QR Code tidak dikenali atau bukan tiket sah Career Day 2026.',
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      });
+      setIsProcessing(false);
+      return;
+    }
+
+    // CEK JIKA STATUS DITOLAK (REJECTED / TIDAK DISETUJUI PANITIA)
+    if (foundGuest.approval_status === 'rejected') {
+      playFeedbackSound('error');
+      setScanResult({
+        status: 'error',
+        guest: foundGuest,
+        message: `⛔ PRESENSI DITOLAK: Pendaftaran perwakilan dari ${foundGuest.university_name} (${foundGuest.pic_name}) telah DITOLAK oleh panitia karena melebihi batas kuota 2 orang.`,
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      });
+      setIsProcessing(false);
+      return;
+    }
+
+    // CEK JIKA STATUS MASIH MENUNGGU PERSETUJUAN (PENDING)
+    if (foundGuest.approval_status === 'pending') {
+      playFeedbackSound('warning');
+      setScanResult({
+        status: 'warning',
+        guest: foundGuest,
+        message: `⏳ PRESENSI TERTUNDA: Pendaftaran tamu ini masih berstatus PENDING (Menunggu Persetujuan Kuota). Silakan panitia menyetujui di tab Persetujuan Kuota terlebih dahulu.`,
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      });
+      setIsProcessing(false);
+      return;
+    }
+
+    // Jika berhalangan hadir
+    if (foundGuest.attendance_status === 'tidak_hadir') {
+      playFeedbackSound('warning');
+      setScanResult({
+        status: 'warning',
+        guest: foundGuest,
+        message: `Tamu ini terdaftar dalam status "Berhalangan Hadir".`,
         timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       });
       setIsProcessing(false);
@@ -547,7 +586,38 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
                   </div>
                 )}
 
-                {/* 3. ERROR / NOT FOUND */}
+                {/* 3. WARNING: STATUS PENDING / PERINGATAN */}
+                {scanResult.status === 'warning' && (
+                  <div className="bg-white/95 backdrop-blur-md rounded-2xl p-5 border-2 border-amber-500 shadow-2xl w-full text-slate-800 text-center space-y-3">
+                    <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto shadow-inner">
+                      <AlertTriangle className="w-8 h-8" />
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500 text-white">
+                        Presensi Tertunda
+                      </span>
+                      <h4 className="text-sm font-bold text-slate-800 mt-1.5 leading-snug">
+                        {scanResult.message}
+                      </h4>
+                      {scanResult.guest && (
+                        <p className="text-xs font-semibold text-indigo-700 mt-1">
+                          {scanResult.guest.pic_name} • {scanResult.guest.university_name}
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={handleScanNext}
+                      className="w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                    >
+                      <span>Lanjut Scan Tamu Lain</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                {/* 4. ERROR / NOT FOUND */}
                 {(scanResult.status === 'not_found' || scanResult.status === 'error') && (
                   <div className="bg-white/95 backdrop-blur-md rounded-2xl p-5 border-2 border-rose-500 shadow-2xl w-full text-slate-800 text-center space-y-3">
                     <div className="w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-inner">
@@ -556,7 +626,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
 
                     <div>
                       <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rose-500 text-white">
-                        Tiket Tidak Dikenali
+                        {scanResult.guest?.approval_status === 'rejected' ? '⛔ Presensi Ditolak' : 'Tiket Tidak Dikenali'}
                       </span>
                       <h4 className="text-sm font-bold text-slate-800 mt-1.5">
                         {scanResult.message}

@@ -171,6 +171,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Open QR modal
   const handleOpenQr = (guest: RsvpGuest) => {
+    if (guest.approval_status === 'rejected') {
+      alert(`⛔ Pendaftaran ${guest.pic_name} (${guest.university_name}) DITOLAK oleh panitia karena melebihi kuota 2 orang. Tamu yang ditolak tidak memiliki QR Code tiket.`);
+      return;
+    }
+    if (guest.approval_status === 'pending') {
+      alert(`⏳ Pendaftaran ${guest.pic_name} (${guest.university_name}) masih PENDING. QR Code baru aktif setelah disetujui panitia.`);
+      return;
+    }
     setQrModalGuest(guest);
     const qrData = JSON.stringify({
       event: 'Makrab Career Day 2026',

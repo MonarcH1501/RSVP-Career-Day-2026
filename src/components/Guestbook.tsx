@@ -14,7 +14,8 @@ import {
   MapPin,
   BadgeCheck,
   UserCheck2,
-  Camera
+  Camera,
+  XCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { QrScannerModal } from './QrScannerModal';
@@ -128,6 +129,15 @@ export const Guestbook: React.FC<GuestbookProps> = ({
   }, [guests]);
 
   const handleCheckInToggle = async (guest: RsvpGuest) => {
+    if (guest.approval_status === 'rejected') {
+      alert(`⛔ Presensi Ditolak: Pendaftaran tamu ini (${guest.pic_name} - ${guest.university_name}) telah DITOLAK oleh panitia karena kuota kampus melebihi 2 orang.`);
+      return;
+    }
+    if (guest.approval_status === 'pending') {
+      alert(`⏳ Presensi Tertunda: Tamu ini masih menunggu persetujuan (status Pending). Silakan panitia menyetujui di tab Persetujuan Kuota terlebih dahulu sebelum check-in.`);
+      return;
+    }
+
     const newStatus = !guest.is_checked_in;
     setCheckingInId(guest.id);
     try {
@@ -499,6 +509,20 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                     </div>
                   ) : !isAttending ? (
                     <span className="text-xs text-slate-400 italic">Konfirmasi tidak hadir</span>
+                  ) : guest.approval_status === 'rejected' ? (
+                    <div className="w-full py-2.5 px-4 rounded-xl bg-rose-50 border border-rose-200 text-center">
+                      <span className="text-xs font-bold text-rose-700 flex items-center justify-center gap-1.5">
+                        <XCircle className="w-4 h-4 text-rose-500" />
+                        Pendaftaran Ditolak Panitia (Kuota &ge; 2)
+                      </span>
+                    </div>
+                  ) : guest.approval_status === 'pending' ? (
+                    <div className="w-full py-2.5 px-4 rounded-xl bg-amber-50 border border-amber-200 text-center">
+                      <span className="text-xs font-bold text-amber-700 flex items-center justify-center gap-1.5">
+                        <Clock className="w-4 h-4 text-amber-600 animate-pulse" />
+                        Menunggu Persetujuan Kuota
+                      </span>
+                    </div>
                   ) : (
                     <button
                       onClick={() => handleCheckInToggle(guest)}

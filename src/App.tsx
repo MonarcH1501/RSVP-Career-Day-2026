@@ -124,11 +124,6 @@ export function App() {
   };
 
   // Navigation handlers
-  const handleGoToAdmin = () => {
-    window.history.pushState({}, '', '/adminpage');
-    setIsAdminRoute(true);
-  };
-
   const handleBackToPublic = () => {
     window.history.pushState({}, '', '/');
     setIsAdminRoute(false);
@@ -224,15 +219,7 @@ export function App() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-slate-400 text-[11px]">
-            <span className="hidden sm:inline">Univ Mitra • Guru • Panitia • YGPKB</span>
-            <span className="hidden sm:inline">•</span>
-            <button
-              onClick={handleGoToAdmin}
-              className="text-slate-500 hover:text-slate-700 transition-colors font-semibold"
-              title="Akses Panitia"
-            >
-              Portal Panitia
-            </button>
+            <span>Univ Mitra • Guru • Panitia • YGPKB</span>
           </div>
         </div>
       </footer>

@@ -10,6 +10,7 @@ import {
   updateGuest, 
   deleteGuest, 
   checkInGuest,
+  setGuestApproval,
   type DatabaseType
 } from './lib/supabase';
 import type { RsvpGuest, CreateRsvpInput, UpdateRsvpInput } from './types';
@@ -123,6 +124,19 @@ export function App() {
     }
   };
 
+  // Handler: Approval Delegasi (Approve / Reject)
+  const handleApproveGuest = async (id: string, status: 'approved' | 'rejected') => {
+    const res = await setGuestApproval(id, status);
+    if (res.data) {
+      setGuests((prev) => prev.map((g) => (g.id === id ? res.data! : g)));
+      showToast(
+        status === 'approved'
+          ? `✅ Kuota perwakilan ${res.data.university_name} (${res.data.pic_name}) telah disetujui!`
+          : `Permohonan kuota ${res.data.pic_name} (${res.data.university_name}) ditolak.`
+      );
+    }
+  };
+
   // Navigation handlers
   const handleBackToPublic = () => {
     window.history.pushState({}, '', '/');
@@ -171,6 +185,7 @@ export function App() {
           onUpdateGuest={handleUpdateGuest}
           onDeleteGuest={handleDeleteGuest}
           onCheckInToggle={handleCheckInToggle}
+          onApproveGuest={handleApproveGuest}
           onLogoutAdmin={handleAdminLogout}
           onGoToPublicPage={handleBackToPublic}
         />
@@ -203,7 +218,7 @@ export function App() {
 
       {/* Main Content Area: Formulir RSVP Publik & E-Tiket QR */}
       <main className="flex-1">
-        <RsvpForm onSubmitRsvp={handleCreateRsvp} />
+        <RsvpForm guests={guests} onSubmitRsvp={handleCreateRsvp} />
       </main>
 
       {/* Footer */}

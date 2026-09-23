@@ -74,6 +74,7 @@ export const fetchGuests = async (): Promise<{
       const sanitized = (json.data || []).map((g: any) => ({
         ...g,
         institution_category: g.institution_category || 'universitas',
+        approval_status: g.approval_status || 'approved',
         needs_projector: Boolean(g.needs_projector),
         is_checked_in: Boolean(g.is_checked_in),
       }));
@@ -93,14 +94,22 @@ export const fetchGuests = async (): Promise<{
 
       if (!error && data) {
         detectedDatabase = 'supabase';
-        return { data: data as RsvpGuest[], error: null, databaseType: 'supabase' };
+        const sanitized = (data as any[]).map((g) => ({
+          ...g,
+          approval_status: g.approval_status || 'approved',
+        }));
+        return { data: sanitized as RsvpGuest[], error: null, databaseType: 'supabase' };
       }
     } catch (_supabaseErr) {}
   }
 
   // 3. Fallback ke Local Storage
   detectedDatabase = 'local';
-  return { data: getLocalGuests(), error: null, databaseType: 'local' };
+  const localGuests = getLocalGuests().map((g) => ({
+    ...g,
+    approval_status: g.approval_status || 'approved',
+  }));
+  return { data: localGuests, error: null, databaseType: 'local' };
 };
 
 export const createGuest = async (
@@ -115,6 +124,7 @@ export const createGuest = async (
     pic_phone: input.pic_phone.trim(),
     pic_email: input.pic_email?.trim() || '',
     pic_position: input.pic_position?.trim() || '',
+    approval_status: input.approval_status || 'approved',
     attendee_count: isAbsent ? 0 : (input.attendee_count || 1),
     additional_attendees: isAbsent ? '' : (input.additional_attendees?.trim() || ''),
     dietary_requirements: isAbsent ? '' : (input.dietary_requirements?.trim() || ''),
@@ -319,4 +329,11 @@ export const checkInGuest = async (
   };
 
   return updateGuest(id, updatePayload);
+};
+
+export const setGuestApproval = async (
+  id: string,
+  approvalStatus: 'approved' | 'rejected'
+): Promise<{ data: RsvpGuest | null; error: string | null }> => {
+  return updateGuest(id, { approval_status: approvalStatus });
 };

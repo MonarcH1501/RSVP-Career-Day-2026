@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Building2, 
   User, 
   Phone, 
   Mail, 
-  MessageSquare, 
   CheckCircle2, 
   AlertCircle, 
   XCircle, 
@@ -16,11 +15,17 @@ import {
   Printer,
   RotateCcw,
   Church,
-  GraduationCap,
   ExternalLink,
   Download,
   BookOpen,
-  Users
+  Users,
+  Search,
+  Copy,
+  Check,
+  Share2,
+  AlertTriangle,
+  GraduationCap,
+  MessageSquare
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import QRCode from 'qrcode';
@@ -36,10 +41,11 @@ const VENUE_MAPS_URL = 'https://www.google.com/maps/place/Restaurant+Gajah+Mada/
 const VENUE_IMAGE_URL = restoranImg;
 
 interface RsvpFormProps {
+  guests?: RsvpGuest[];
   onSubmitRsvp: (data: CreateRsvpInput) => Promise<{ data: RsvpGuest | null; error: string | null }>;
 }
 
-export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
+export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp }) => {
   const [formData, setFormData] = useState<CreateRsvpInput>({
     institution_category: 'universitas',
     university_name: '',
@@ -61,6 +67,53 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [lastSelectedUniv, setLastSelectedUniv] = useState<string>('');
   const [selectedCategoryKey, setSelectedCategoryKey] = useState<CategoryOptionKey>('universitas');
+  
+  // Fitur Cek Tiket & Anti-Hilang
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchFeedback, setSearchFeedback] = useState<string | null>(null);
+  const [rememberedGuest, setRememberedGuest] = useState<RsvpGuest | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  // Sync ticket from URL (?ticket=ID) or localStorage on load
+  useEffect(() => {
+    if (!guests || guests.length === 0) return;
+
+    // 1. Cek query parameter ?ticket=...
+    const urlParams = new URLSearchParams(window.location.search);
+    const ticketId = urlParams.get('ticket');
+    if (ticketId) {
+      const match = guests.find((g) => g.id === ticketId);
+      if (match) {
+        setSubmittedGuest(match);
+        return;
+      }
+    }
+
+    // 2. Cek memori browser HP (localStorage)
+    const savedId = localStorage.getItem('career_day_my_guest_id');
+    if (savedId) {
+      const match = guests.find((g) => g.id === savedId);
+      if (match) {
+        setRememberedGuest(match);
+      }
+    }
+  }, [guests]);
+
+  // Hitung jumlah perwakilan terdaftar untuk universitas yang sedang dipilih (Maksimal 2 orang)
+  const existingUnivAttendees = useMemo(() => {
+    if (formData.institution_category !== 'universitas' || !formData.university_name.trim() || !guests) {
+      return [];
+    }
+    const target = formData.university_name.toLowerCase().trim();
+    return guests.filter((g) => 
+      g.institution_category === 'universitas' &&
+      g.university_name.toLowerCase().trim() === target &&
+      g.attendance_status === 'hadir' &&
+      g.approval_status !== 'rejected'
+    );
+  }, [formData.institution_category, formData.university_name, guests]);
+
+  const isUnivQuotaExceeded = formData.institution_category === 'universitas' && existingUnivAttendees.length >= 2;
 
   // Generate QR code saat form berhasil disubmit khusus jika hadir
   useEffect(() => {
@@ -131,6 +184,41 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
     });
   };
 
+  const handleCopyTicketLink = () => {
+    if (!submittedGuest) return;
+    const ticketUrl = `${window.location.origin}${window.location.pathname}?ticket=${submittedGuest.id}`;
+    navigator.clipboard.writeText(ticketUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 3000);
+  };
+
+  const handleSearchTicket = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchFeedback(null);
+    const clean = searchQuery.replace(/\D/g, '');
+    if (!clean || clean.length < 4) {
+      setSearchFeedback('Mohon masukkan minimal 4 digit nomor WhatsApp.');
+      return;
+    }
+
+    if (!guests || guests.length === 0) {
+      setSearchFeedback('Data tamu belum selesai dimuat. Silakan tunggu sebentar.');
+      return;
+    }
+
+    const matches = guests.filter((g) => g.pic_phone.replace(/\D/g, '').includes(clean));
+    if (matches.length === 0) {
+      setSearchFeedback(`Tidak ditemukan data pendaftaran dengan nomor WhatsApp "${searchQuery}".`);
+      return;
+    }
+
+    const found = matches[0];
+    setSubmittedGuest(found);
+    localStorage.setItem('career_day_my_guest_id', found.id);
+    const newUrl = `${window.location.pathname}?ticket=${found.id}`;
+    window.history.replaceState({}, '', newUrl);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -149,18 +237,26 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
       return;
     }
 
+    const willBePending = isUnivQuotaExceeded && formData.attendance_status === 'hadir';
+
     setIsSubmitting(true);
     try {
       const res = await onSubmitRsvp({
         ...formData,
         attendee_count: 1, // 1 orang unik
+        approval_status: willBePending ? 'pending' : 'approved',
       });
 
       if (res.error) {
         setErrorMessage(`Terjadi kendala: ${res.error}`);
       } else if (res.data) {
         setSubmittedGuest(res.data);
-        if (formData.attendance_status === 'hadir') {
+        localStorage.setItem('career_day_my_guest_id', res.data.id);
+
+        const newUrl = `${window.location.pathname}?ticket=${res.data.id}`;
+        window.history.replaceState({}, '', newUrl);
+
+        if (formData.attendance_status === 'hadir' && res.data.approval_status !== 'pending') {
           try {
             confetti({
               particleCount: 100,
@@ -183,6 +279,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
     setQrCodeUrl(null);
     setLastSelectedUniv('');
     setSelectedCategoryKey('universitas');
+    window.history.replaceState({}, '', window.location.pathname);
     setFormData({
       institution_category: 'universitas',
       university_name: '',
@@ -278,7 +375,88 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
       );
     }
 
-    // JIKA BISA HADIR: TAMPILKAN E-TIKET RESMI & QR CODE PRESENSI
+    // JIKA STATUS MENUNGGU PERSETUJUAN (PENDING KUOTA > 2 ORANG)
+    if (submittedGuest.approval_status === 'pending') {
+      const waMsg = `Halo Panitia Career Day 2026, saya ${submittedGuest.pic_name} dari ${submittedGuest.university_name} ingin konfirmasi pendaftaran delegasi tambahan (status pending). Mohon bantuannya untuk persetujuan kehadiran. Terima kasih!`;
+      const waUrl = `https://wa.me/?text=${encodeURIComponent(waMsg)}`;
+
+      return (
+        <div className="max-w-lg mx-auto py-6 sm:py-12 px-3 sm:px-4 text-center">
+          <div className="bg-white rounded-3xl shadow-xl border border-amber-300 p-6 sm:p-8 text-center animate-in fade-in zoom-in-95 duration-200">
+            {/* Icon Banner */}
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto mb-4 shadow-xs">
+              <Clock className="w-8 h-8 sm:w-10 sm:h-10" />
+            </div>
+
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100 border border-amber-300 px-3 py-1 rounded-full inline-block">
+              Status: Menunggu Persetujuan Panitia
+            </span>
+
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 mt-3 tracking-tight">
+              Pendaftaran Delegasi Tambahan Diterima
+            </h2>
+
+            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed max-w-md mx-auto">
+              Yth. Bapak/Ibu <strong className="text-slate-900">{submittedGuest.pic_name}</strong> dari{' '}
+              <strong className="text-slate-900">{submittedGuest.university_name}</strong>.
+            </p>
+
+            <div className="mt-4 p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-left space-y-2 text-xs text-amber-900">
+              <p className="font-bold flex items-center gap-1.5 text-amber-950">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                Kuota Resmi Telah Terisi (Maksimal 2 Orang)
+              </p>
+              <p className="leading-relaxed">
+                Setiap universitas mitra dibatasi maksimal 2 perwakilan resmi. Karena universitas Anda telah mencapai batas kuota tersebut, pendaftaran Anda saat ini tercatat dalam status <strong>Menunggu Persetujuan (Pending)</strong>.
+              </p>
+              <p className="leading-relaxed text-[11px] text-amber-800 font-medium">
+                ℹ️ E-Tiket & QR Code kehadiran akan aktif secara otomatis setelah panitia menyetujui permohonan kuota tambahan ini.
+              </p>
+            </div>
+
+            {/* Ringkasan Data Tamu */}
+            <div className="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-left space-y-2 text-xs">
+              <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                <span className="text-slate-400 font-medium">Universitas:</span>
+                <span className="font-bold text-slate-800 text-right">{submittedGuest.university_name}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                <span className="text-slate-400 font-medium">Nama PIC:</span>
+                <span className="font-bold text-slate-800">{submittedGuest.pic_name}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                <span className="text-slate-400 font-medium">No. WhatsApp:</span>
+                <span className="font-bold text-indigo-600">{submittedGuest.pic_phone}</span>
+              </div>
+            </div>
+
+            {/* Action Buttons: Hubungi Panitia via WhatsApp */}
+            <div className="mt-6 space-y-2.5">
+              <a
+                href={waUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-200 transition-all active:scale-[0.98]"
+              >
+                <Phone className="w-4 h-4" />
+                <span>Hubungi Panitia via WhatsApp untuk Approval</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={resetForm}
+                className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition-all active:scale-[0.98]"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Kembali ke Halaman Utama</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // JIKA BISA HADIR & SUDAH APPROVED: TAMPILKAN E-TIKET RESMI & QR CODE PRESENSI
     return (
       <div className="max-w-xl mx-auto py-4 sm:py-8 px-3 sm:px-4 text-left">
         <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
@@ -340,16 +518,45 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
                   </p>
                 </div>
 
-                {/* Tombol Simpan QR ke Galeri HP */}
-                <button
-                  onClick={handleDownloadQr}
-                  className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all active:scale-[0.98]"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Simpan Gambar QR ke HP</span>
-                </button>
+                {/* Tombol Simpan QR ke Galeri HP & Kirim ke WA */}
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    onClick={handleDownloadQr}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all active:scale-[0.98]"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download QR</span>
+                  </button>
+
+                  <a
+                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Halo, ini link E-Tiket QR Career Day 2026 saya (${submittedGuest.pic_name} - ${submittedGuest.university_name}): ${window.location.origin}${window.location.pathname}?ticket=${submittedGuest.id}`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-sm transition-all active:scale-[0.98]"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Kirim ke WhatsApp Saya</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={handleCopyTicketLink}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-xs transition-all active:scale-[0.98]"
+                  >
+                    {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedLink ? 'Link Tersalin!' : 'Salin Link'}</span>
+                  </button>
+                </div>
               </div>
             )}
+
+            {/* Banner Pengingat Screenshot */}
+            <div className="bg-amber-50 border border-amber-200 p-3 sm:p-3.5 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                <strong>Tips:</strong> Screenshot QR Code di atas atau simpan link tiket ini agar mudah dibuka kembali saat tiba di Restoran Gajah Mada!
+              </p>
+            </div>
 
             {/* Ringkasan Data (Grid 2 Kolom Compact di HP) */}
             <div className="grid grid-cols-2 gap-3 pb-4 border-b border-slate-100 text-xs">
@@ -553,6 +760,82 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
         </div>
       </div>
 
+      {/* AUTO-RESTORE BANNER (Jika pernah mendaftar di HP ini) */}
+      {rememberedGuest && (
+        <div className="mb-4 sm:mb-6 p-4 rounded-2xl bg-indigo-50 border border-indigo-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <CheckCircle2 className="w-5 h-5 text-emerald-300" />
+            </div>
+            <div>
+              <p className="font-bold text-slate-900 text-xs sm:text-sm">
+                Halo, {rememberedGuest.pic_name}!
+              </p>
+              <p className="text-[11px] sm:text-xs text-slate-600">
+                Anda sudah terdaftar dari <strong>{rememberedGuest.university_name}</strong>.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setSubmittedGuest(rememberedGuest)}
+              className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 shadow-xs transition-all active:scale-95"
+            >
+              Buka E-Tiket Saya
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setRememberedGuest(null);
+                localStorage.removeItem('career_day_my_guest_id');
+              }}
+              title="Tutup & daftar sebagai delegasi baru"
+              className="px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 text-xs font-semibold transition-all active:scale-95"
+            >
+              Daftar Baru
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* FORM PENCARIAN E-TIKET VIA WHATSAPP (Anti-Hilang) */}
+      <div className="mb-4 sm:mb-6 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <Search className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-800">Sudah Pernah Mendaftar?</p>
+              <p className="text-[10px] text-slate-400">Cek / ambil kembali E-Tiket & QR Code Anda</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSearchTicket} className="flex items-center gap-2 mt-1 sm:mt-0">
+            <input
+              type="tel"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="No. WhatsApp Anda..."
+              className="flex-1 sm:w-56 px-3 py-2 text-xs rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
+            />
+            <button
+              type="submit"
+              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all shrink-0 active:scale-95 shadow-xs"
+            >
+              Cek Tiket
+            </button>
+          </form>
+        </div>
+
+        {searchFeedback && (
+          <p className="mt-2.5 text-xs font-medium text-rose-700 bg-rose-50 p-2.5 rounded-xl border border-rose-200 animate-in fade-in duration-200">
+            {searchFeedback}
+          </p>
+        )}
+      </div>
+
       {/* Main Form Card */}
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl sm:rounded-3xl shadow-lg border border-slate-200 p-4 sm:p-8 space-y-5 sm:space-y-6">
         
@@ -741,6 +1024,22 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
                   />
                 </div>
               )}
+
+              {/* Banner Peringatan Kuota Universitas Penuh (Maks. 2 Orang) */}
+              {isUnivQuotaExceeded && (
+                <div className="mt-2.5 p-3.5 sm:p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs sm:text-sm space-y-1.5 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 font-bold text-amber-950">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>Kuota Resmi Delegasi Universitas Penuh (Maks. 2 Orang)</span>
+                  </div>
+                  <p className="text-amber-800 text-xs leading-relaxed">
+                    <strong>{formData.university_name}</strong> saat ini telah memiliki {existingUnivAttendees.length} perwakilan terdaftar ({existingUnivAttendees.map((g) => g.pic_name).join(', ')}).
+                  </p>
+                  <p className="text-amber-700 text-[11px] leading-relaxed">
+                    ℹ️ Formulir ini tetap dapat Anda kirimkan sebagai <strong>pendaftaran delegasi tambahan</strong>. Status kehadiran akan dicatat sebagai <strong>Menunggu Persetujuan (Pending)</strong> dan memerlukan konfirmasi panitia sebelum e-tiket diterbitkan.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Nama Lengkap Peserta */}
@@ -828,6 +1127,8 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
             className={`w-full py-3.5 px-4 rounded-xl sm:rounded-2xl text-white font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] ${
               isSubmitting
                 ? 'bg-indigo-400 cursor-not-allowed'
+                : isAttending && isUnivQuotaExceeded
+                ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-300'
                 : isAttending
                 ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-300'
                 : 'bg-slate-800 hover:bg-slate-900 shadow-slate-300'
@@ -838,6 +1139,11 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ onSubmitRsvp }) => {
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 <span>Menyimpan Konfirmasi...</span>
               </div>
+            ) : isAttending && isUnivQuotaExceeded ? (
+              <>
+                <Send className="w-4 h-4" />
+                <span>Ajukan Pendaftaran Tambahan (Status Pending)</span>
+              </>
             ) : isAttending ? (
               <>
                 <Send className="w-4 h-4" />

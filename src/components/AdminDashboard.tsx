@@ -37,6 +37,7 @@ interface AdminDashboardProps {
   onUpdateGuest: (id: string, data: UpdateRsvpInput) => Promise<{ data: RsvpGuest | null; error: string | null }>;
   onDeleteGuest: (id: string) => Promise<{ success: boolean; error: string | null }>;
   onCheckInToggle: (id: string, checkedIn: boolean, staffName?: string) => Promise<void>;
+  onApproveGuest?: (id: string, status: 'approved' | 'rejected') => Promise<void>;
   onLogoutAdmin: () => void;
   onGoToPublicPage: () => void;
 }
@@ -49,14 +50,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onUpdateGuest,
   onDeleteGuest,
   onCheckInToggle,
+  onApproveGuest,
   onLogoutAdmin,
   onGoToPublicPage,
 }) => {
-  const [adminTab, setAdminTab] = useState<'guestbook' | 'master'>('guestbook');
+  const [adminTab, setAdminTab] = useState<'guestbook' | 'master' | 'pending'>('guestbook');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [checkInFilter, setCheckInFilter] = useState<string>('all');
+  const [approvalFilter, setApprovalFilter] = useState<string>('all');
+
+  const pendingGuests = useMemo(() => {
+    return guests.filter((g) => g.approval_status === 'pending');
+  }, [guests]);
 
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -135,10 +142,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       if (statusFilter !== 'all' && g.attendance_status !== statusFilter) return false;
       if (checkInFilter === 'checked_in' && !g.is_checked_in) return false;
       if (checkInFilter === 'not_checked_in' && g.is_checked_in) return false;
+      if (approvalFilter !== 'all' && (g.approval_status || 'approved') !== approvalFilter) return false;
 
       return true;
     });
-  }, [guests, searchTerm, categoryFilter, statusFilter, checkInFilter]);
+  }, [guests, searchTerm, categoryFilter, statusFilter, checkInFilter, approvalFilter]);
 
   // Key KPI metrics
   const kpis = useMemo(() => {
@@ -146,6 +154,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const hadir = guests.filter((g) => g.attendance_status === 'hadir');
     const tidakHadir = guests.filter((g) => g.attendance_status === 'tidak_hadir');
     const checkedIn = guests.filter((g) => g.is_checked_in);
+    const pending = guests.filter((g) => g.approval_status === 'pending');
     const totalPaxHadir = hadir.reduce((sum, g) => sum + (g.attendee_count || 1), 0);
     const projectorCount = hadir.filter((g) => g.needs_projector).length;
 
@@ -154,6 +163,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       hadirCount: hadir.length,
       tidakHadirCount: tidakHadir.length,
       checkedInCount: checkedIn.length,
+      pendingCount: pending.length,
       totalPaxHadir,
       projectorCount,
     };
@@ -408,11 +418,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
-      {/* Subtab Switcher (Responsive: 2 tombol sejajar di HP) */}
-      <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-200/60 p-1 sm:p-1.5 rounded-2xl mb-4 sm:mb-6 w-full sm:w-fit border border-slate-200">
+      {/* Subtab Switcher (Responsive: 3 tombol sejajar di HP) */}
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 bg-slate-200/60 p-1 sm:p-1.5 rounded-2xl mb-4 sm:mb-6 w-full sm:w-fit border border-slate-200">
         <button
           onClick={() => setAdminTab('guestbook')}
-          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
             adminTab === 'guestbook'
               ? 'bg-white text-indigo-600 shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
@@ -420,12 +430,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         >
           <BookOpenCheck className="w-4 h-4 shrink-0" />
           <span className="hidden sm:inline">Presensi Buku Tamu (Meja Resepsionis)</span>
-          <span className="sm:hidden">Buku Tamu (Presensi)</span>
+          <span className="sm:hidden">Buku Tamu</span>
         </button>
 
         <button
           onClick={() => setAdminTab('master')}
-          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
             adminTab === 'master'
               ? 'bg-white text-indigo-600 shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
@@ -433,7 +443,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         >
           <LayoutDashboard className="w-4 h-4 shrink-0" />
           <span className="hidden sm:inline">Master Data & Rekap Konsumsi</span>
-          <span className="sm:hidden">Master Data (CRUD)</span>
+          <span className="sm:hidden">Master Data</span>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('pending')}
+          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all relative ${
+            adminTab === 'pending'
+              ? 'bg-white text-amber-600 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Clock className="w-4 h-4 shrink-0 text-amber-500" />
+          <span className="hidden sm:inline">Persetujuan Kuota</span>
+          <span className="sm:hidden">Approval</span>
+          {pendingGuests.length > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-extrabold animate-pulse">
+              {pendingGuests.length}
+            </span>
+          )}
         </button>
       </div>
 
@@ -444,6 +472,130 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           onCheckIn={onCheckInToggle}
           onAddWalkIn={onCreateGuest}
         />
+      ) : adminTab === 'pending' ? (
+        <div className="space-y-4 text-left">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-2 rounded-xl bg-amber-100 text-amber-700">
+                  <Clock className="w-5 h-5" />
+                </span>
+                <h2 className="text-base sm:text-lg font-black text-slate-900">
+                  Persetujuan Delegasi Tambahan (Melebihi Kuota 2 Orang)
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Daftar perwakilan universitas mitra yang mendaftar melebihi batas kuota 2 orang per instansi dan memerlukan persetujuan panitia.
+              </p>
+            </div>
+            <div className="px-3.5 py-1.5 bg-amber-50 border border-amber-200 rounded-xl text-xs font-bold text-amber-800 self-start sm:self-auto">
+              Total Pending: {pendingGuests.length} Delegasi
+            </div>
+          </div>
+
+          {pendingGuests.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 sm:p-12 text-center text-slate-400">
+              <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
+              <p className="font-bold text-slate-700 text-sm">Tidak Ada Pendaftaran yang Menunggu Persetujuan</p>
+              <p className="text-xs text-slate-400 mt-1">
+                Semua delegasi universitas yang terdaftar telah sesuai dengan batas kuota 2 orang.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
+              {pendingGuests.map((guest) => {
+                const approvedFromSameUniv = guests.filter(
+                  (g) =>
+                    g.institution_category === 'universitas' &&
+                    g.university_name.toLowerCase().trim() === guest.university_name.toLowerCase().trim() &&
+                    g.attendance_status === 'hadir' &&
+                    g.approval_status !== 'rejected' &&
+                    g.id !== guest.id
+                );
+
+                return (
+                  <div
+                    key={guest.id}
+                    className="bg-white rounded-2xl border-2 border-amber-200 shadow-xs p-4 sm:p-5 space-y-3 relative"
+                  >
+                    <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                      <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
+                        Menunggu Approval
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        {new Date(guest.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="font-extrabold text-slate-900 text-base">
+                        {guest.university_name}
+                      </h3>
+                      <p className="text-xs font-bold text-slate-700 mt-1 flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{guest.pic_name}</span>
+                        {guest.pic_position && <span className="text-slate-400 font-normal">({guest.pic_position})</span>}
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <a
+                          href={`https://wa.me/${guest.pic_phone.replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition-colors"
+                        >
+                          <Phone className="w-3 h-3 text-emerald-600" />
+                          <span>{guest.pic_phone}</span>
+                        </a>
+                        {guest.pic_email && (
+                          <span className="text-xs text-slate-400 flex items-center gap-1">
+                            <Mail className="w-3 h-3" />
+                            {guest.pic_email}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="bg-amber-50/70 p-3 rounded-xl border border-amber-100 text-xs space-y-1 text-amber-900">
+                      <p className="font-bold text-[11px] text-amber-950">
+                        Status Kuota Kampus Ini:
+                      </p>
+                      <p className="text-[11px] leading-relaxed">
+                        Saat ini sudah ada <strong>{approvedFromSameUniv.length} perwakilan resmi</strong> terdaftar
+                        {approvedFromSameUniv.length > 0 && ` (${approvedFromSameUniv.map((g) => g.pic_name).join(', ')})`}.
+                      </p>
+                    </div>
+
+                    {guest.notes && (
+                      <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs text-slate-600 italic">
+                        <span className="font-bold not-italic text-slate-400 text-[10px] block uppercase mb-0.5">Catatan Tamu:</span>
+                        "{guest.notes}"
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                      <button
+                        onClick={() => onApproveGuest && onApproveGuest(guest.id, 'approved')}
+                        className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>✓ Setujui (Approve)</span>
+                      </button>
+
+                      <button
+                        onClick={() => onApproveGuest && onApproveGuest(guest.id, 'rejected')}
+                        className="py-2.5 px-3 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        <span>✕ Tolak Permohonan</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       ) : (
         <>
           {/* KPI Cards Grid */}
@@ -513,7 +665,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full md:w-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 w-full md:w-auto">
           {/* Category */}
           <select
             value={categoryFilter}
@@ -547,6 +699,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <option value="all">Semua Presensi</option>
             <option value="checked_in">Sudah Check-In</option>
             <option value="not_checked_in">Belum Check-In</option>
+          </select>
+
+          {/* Approval Status */}
+          <select
+            value={approvalFilter}
+            onChange={(e) => setApprovalFilter(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
+          >
+            <option value="all">Semua Persetujuan</option>
+            <option value="approved">Disetujui (Approved)</option>
+            <option value="pending">Menunggu (Pending)</option>
+            <option value="rejected">Ditolak (Rejected)</option>
           </select>
         </div>
       </div>
@@ -586,7 +750,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       : 'Universitas Mitra'}
                   </span>
 
-                  {isAttending ? (
+                  {guest.approval_status === 'pending' ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-300 shrink-0">
+                      <Clock className="w-3 h-3 text-amber-500 animate-pulse" /> Pending Approval
+                    </span>
+                  ) : guest.approval_status === 'rejected' ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-300 shrink-0">
+                      <XCircle className="w-3 h-3 text-rose-500" /> Ditolak
+                    </span>
+                  ) : isAttending ? (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                       <CheckCircle2 className="w-3 h-3" /> Hadir ({guest.attendee_count} pax)
                     </span>
@@ -634,8 +806,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 )}
 
-                {/* Check-In Bar */}
-                {isAttending && (
+                {/* Check-In Bar or Pending Approval Bar */}
+                {guest.approval_status === 'pending' ? (
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-amber-100 bg-amber-50/70 -mx-4 -mb-1 px-4 py-2.5 rounded-b-2xl">
+                    <div className="text-[11px] font-bold text-amber-800 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span>Perlu Persetujuan</span>
+                    </div>
+                    {onApproveGuest && (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => onApproveGuest(guest.id, 'rejected')}
+                          className="px-2.5 py-1 text-xs font-bold text-rose-600 bg-white border border-rose-200 rounded-lg hover:bg-rose-50 active:scale-95 transition-all shadow-xs"
+                        >
+                          Tolak
+                        </button>
+                        <button
+                          onClick={() => onApproveGuest(guest.id, 'approved')}
+                          className="px-2.5 py-1 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 active:scale-95 transition-all shadow-xs"
+                        >
+                          Setujui
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : guest.approval_status === 'rejected' ? (
+                  <div className="pt-2 border-t border-slate-100 text-[11px] text-rose-600 font-semibold italic">
+                    Pendaftaran ditolak karena melebihi kuota 2 delegasi.
+                  </div>
+                ) : isAttending && (
                   <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
                     <div className="text-[11px]">
                       <span className="text-slate-400">Presensi: </span>
@@ -767,7 +966,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                       {/* Status */}
                       <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                        {guest.attendance_status === 'hadir' ? (
+                        {guest.approval_status === 'pending' ? (
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-300 shadow-2xs">
+                              <Clock className="w-3 h-3 text-amber-500 animate-pulse" /> Pending
+                            </span>
+                            {onApproveGuest && (
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <button
+                                  onClick={() => onApproveGuest(guest.id, 'approved')}
+                                  className="px-2 py-0.5 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded shadow-2xs active:scale-95 transition-all"
+                                  title="Setujui delegasi tambahan ini"
+                                >
+                                  ✓ Setujui
+                                </button>
+                                <button
+                                  onClick={() => onApproveGuest(guest.id, 'rejected')}
+                                  className="px-2 py-0.5 text-[10px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded border border-rose-200 active:scale-95 transition-all"
+                                  title="Tolak delegasi tambahan ini"
+                                >
+                                  ✕ Tolak
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ) : guest.approval_status === 'rejected' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <XCircle className="w-3 h-3 text-rose-500" /> Ditolak
+                          </span>
+                        ) : guest.attendance_status === 'hadir' ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             <CheckCircle2 className="w-3 h-3" /> Hadir
                           </span>
@@ -794,7 +1021,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                       {/* Check-In */}
                       <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                        {guest.attendance_status === 'tidak_hadir' ? (
+                        {guest.approval_status === 'pending' ? (
+                          <span className="text-xs text-amber-600 font-semibold italic">Perlu Approval</span>
+                        ) : guest.approval_status === 'rejected' ? (
+                          <span className="text-xs text-rose-400 font-semibold italic">Ditolak</span>
+                        ) : guest.attendance_status === 'tidak_hadir' ? (
                           <span className="text-xs text-slate-400 italic">-</span>
                         ) : (
                           <button
@@ -1114,6 +1345,52 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <p className="text-slate-400 text-[10px] uppercase font-bold">Status Kehadiran</p>
                   <p className="font-bold text-slate-800">{viewingGuest.attendance_status === 'hadir' ? 'Bisa Hadir' : 'Berhalangan'}</p>
                 </div>
+              </div>
+
+              <div>
+                <p className="text-slate-400 text-[10px] uppercase font-bold mb-1">Status Persetujuan Kuota</p>
+                {viewingGuest.approval_status === 'pending' ? (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div>
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-800">
+                        <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse" /> Pending Approval (Kuota &ge; 2)
+                      </span>
+                      <p className="text-[11px] text-amber-700 mt-0.5">Pendaftaran ini melebihi kuota 2 perwakilan universitas.</p>
+                    </div>
+                    {onApproveGuest && (
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await onApproveGuest(viewingGuest.id, 'rejected');
+                            setViewingGuest((prev) => prev ? { ...prev, approval_status: 'rejected' } : null);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition-all shadow-xs"
+                        >
+                          Tolak
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await onApproveGuest(viewingGuest.id, 'approved');
+                            setViewingGuest((prev) => prev ? { ...prev, approval_status: 'approved' } : null);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold transition-all shadow-xs"
+                        >
+                          Setujui
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : viewingGuest.approval_status === 'rejected' ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                    <XCircle className="w-3.5 h-3.5 text-rose-500" /> Ditolak oleh Panitia
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Disetujui (Approved)
+                  </span>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-2">

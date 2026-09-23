@@ -1,4 +1,5 @@
 export type AttendanceStatus = 'hadir' | 'tidak_hadir';
+export type ApprovalStatus = 'approved' | 'pending' | 'rejected';
 
 export type InstitutionCategory = 'universitas' | 'sekolah' | 'yayasan';
 
@@ -13,6 +14,7 @@ export interface RsvpGuest {
   pic_phone: string;       // No WhatsApp Pribadi
   pic_email?: string;      // Email
   attendance_status: AttendanceStatus;
+  approval_status?: ApprovalStatus; // 'approved' (default), 'pending', 'rejected'
   attendee_count: number;  // Selalu 1 per orang
   additional_attendees?: string;
   dietary_requirements?: string;
@@ -32,6 +34,7 @@ export type CreateRsvpInput = {
   pic_phone: string;
   pic_email?: string;
   attendance_status: AttendanceStatus;
+  approval_status?: ApprovalStatus;
   attendee_count?: number;
   additional_attendees?: string;
   dietary_requirements?: string;

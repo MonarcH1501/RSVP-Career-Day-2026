@@ -54,6 +54,27 @@ const saveLocalGuests = (guests: RsvpGuest[]) => {
   }
 };
 
+export const sanitizeGuest = (g: any): RsvpGuest => {
+  let approvalStatus: 'approved' | 'pending' | 'rejected' = g.approval_status || 'approved';
+  let cleanedNotes = g.notes || '';
+
+  // Extract [APPROVAL:status] tag if notes has it
+  const match = cleanedNotes.match(/\[APPROVAL:(approved|pending|rejected)\]/);
+  if (match) {
+    approvalStatus = match[1] as 'approved' | 'pending' | 'rejected';
+    cleanedNotes = cleanedNotes.replace(/\[APPROVAL:(approved|pending|rejected)\]\s*/g, '').trim();
+  }
+
+  return {
+    ...g,
+    institution_category: g.institution_category || 'universitas',
+    approval_status: approvalStatus,
+    notes: cleanedNotes,
+    needs_projector: Boolean(g.needs_projector),
+    is_checked_in: Boolean(g.is_checked_in),
+  };
+};
+
 // ======================= API FUNCTIONS =======================
 
 export const fetchGuests = async (): Promise<{
@@ -71,13 +92,7 @@ export const fetchGuests = async (): Promise<{
     if (res.ok) {
       const json = await res.json();
       detectedDatabase = 'mysql';
-      const sanitized = (json.data || []).map((g: any) => ({
-        ...g,
-        institution_category: g.institution_category || 'universitas',
-        approval_status: g.approval_status || 'approved',
-        needs_projector: Boolean(g.needs_projector),
-        is_checked_in: Boolean(g.is_checked_in),
-      }));
+      const sanitized = (json.data || []).map(sanitizeGuest);
       return { data: sanitized, error: null, databaseType: 'mysql' };
     }
   } catch (_mysqlErr) {
@@ -94,21 +109,15 @@ export const fetchGuests = async (): Promise<{
 
       if (!error && data) {
         detectedDatabase = 'supabase';
-        const sanitized = (data as any[]).map((g) => ({
-          ...g,
-          approval_status: g.approval_status || 'approved',
-        }));
-        return { data: sanitized as RsvpGuest[], error: null, databaseType: 'supabase' };
+        const sanitized = (data as any[]).map(sanitizeGuest);
+        return { data: sanitized, error: null, databaseType: 'supabase' };
       }
     } catch (_supabaseErr) {}
   }
 
   // 3. Fallback ke Local Storage
   detectedDatabase = 'local';
-  const localGuests = getLocalGuests().map((g) => ({
-    ...g,
-    approval_status: g.approval_status || 'approved',
-  }));
+  const localGuests = getLocalGuests().map(sanitizeGuest);
   return { data: localGuests, error: null, databaseType: 'local' };
 };
 
@@ -145,11 +154,7 @@ export const createGuest = async (
         const json = await res.json();
         const item = json.data;
         return {
-          data: {
-            ...item,
-            needs_projector: Boolean(item.needs_projector),
-            is_checked_in: Boolean(item.is_checked_in),
-          },
+          data: sanitizeGuest(item),
           error: null,
         };
       }
@@ -161,14 +166,46 @@ export const createGuest = async (
   // Supabase
   if (detectedDatabase === 'supabase' && supabase) {
     try {
+      // 1. Coba insert standar (jika kolom approval_status sudah ada di DB)
+      const basePayload = {
+        ...newGuestBase,
+        is_checked_in: false,
+        checked_in_at: null,
+        checked_in_by: '',
+      };
+
       const { data, error } = await supabase
         .from('rsvp_guests')
-        .insert([{ ...newGuestBase, is_checked_in: false, checked_in_at: null, checked_in_by: '' }])
+        .insert([basePayload])
         .select()
         .single();
 
       if (!error && data) {
-        return { data: data as RsvpGuest, error: null };
+        return { data: sanitizeGuest(data), error: null };
+      }
+
+      // 2. Jika kolom approval_status belum ada di DB (PGRST204), simpan status di notes
+      if (error && (error.code === 'PGRST204' || error.message?.includes('approval_status'))) {
+        const approvalTag = newGuestBase.approval_status ? `[APPROVAL:${newGuestBase.approval_status}]` : '';
+        const notesWithTag = approvalTag
+          ? (newGuestBase.notes ? `${approvalTag} ${newGuestBase.notes}` : approvalTag)
+          : (newGuestBase.notes || '');
+
+        const { approval_status: _omit, ...payloadWithoutApproval } = basePayload;
+        const fallbackPayload = {
+          ...payloadWithoutApproval,
+          notes: notesWithTag,
+        };
+
+        const { data: retryData, error: retryError } = await supabase
+          .from('rsvp_guests')
+          .insert([fallbackPayload])
+          .select()
+          .single();
+
+        if (!retryError && retryData) {
+          return { data: sanitizeGuest(retryData), error: null };
+        }
       }
     } catch (err) {
       console.warn('Supabase create failed:', err);
@@ -206,11 +243,7 @@ export const updateGuest = async (
         const json = await res.json();
         const item = json.data;
         return {
-          data: {
-            ...item,
-            needs_projector: Boolean(item.needs_projector),
-            is_checked_in: Boolean(item.is_checked_in),
-          },
+          data: sanitizeGuest(item),
           error: null,
         };
       }
@@ -230,7 +263,39 @@ export const updateGuest = async (
         .single();
 
       if (!error && data) {
-        return { data: data as RsvpGuest, error: null };
+        return { data: sanitizeGuest(data), error: null };
+      }
+
+      // Fallback jika approval_status kolom belum ada di DB
+      if (error && (error.code === 'PGRST204' || error.message?.includes('approval_status')) && input.approval_status) {
+        const { data: currentGuest } = await supabase
+          .from('rsvp_guests')
+          .select('notes')
+          .eq('id', id)
+          .single();
+
+        let baseNotes = (currentGuest?.notes || '').replace(/\[APPROVAL:(approved|pending|rejected)\]\s*/g, '').trim();
+        if (input.notes !== undefined) {
+          baseNotes = input.notes.replace(/\[APPROVAL:(approved|pending|rejected)\]\s*/g, '').trim();
+        }
+        const newNotes = `[APPROVAL:${input.approval_status}]${baseNotes ? ' ' + baseNotes : ''}`;
+
+        const { approval_status: _omit, ...inputWithoutApproval } = input;
+        const retryPayload = {
+          ...inputWithoutApproval,
+          notes: newNotes,
+        };
+
+        const { data: retryData, error: retryError } = await supabase
+          .from('rsvp_guests')
+          .update(retryPayload)
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (!retryError && retryData) {
+          return { data: sanitizeGuest(retryData), error: null };
+        }
       }
     } catch (err) {
       console.warn('Supabase update failed:', err);

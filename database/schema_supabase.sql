@@ -3,6 +3,9 @@
 -- RESTORAN GAJAH MADA PONTIANAK
 -- ==========================================================
 
+-- Migration jika tabel sudah pernah dibuat:
+-- ALTER TABLE public.rsvp_guests ADD COLUMN IF NOT EXISTS approval_status TEXT NOT NULL DEFAULT 'approved';
+
 -- 1. Buat Tabel rsvp_guests
 CREATE TABLE IF NOT EXISTS public.rsvp_guests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -15,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.rsvp_guests (
     pic_phone TEXT NOT NULL,
     pic_email TEXT DEFAULT '',
     attendance_status TEXT NOT NULL DEFAULT 'hadir',
+    approval_status TEXT NOT NULL DEFAULT 'approved',
     attendee_count INTEGER NOT NULL DEFAULT 1,
     additional_attendees TEXT DEFAULT '',
     dietary_requirements TEXT DEFAULT '',

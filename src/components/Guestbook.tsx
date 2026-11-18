@@ -4,23 +4,27 @@ import {
   CheckCircle2, 
   Clock, 
   Users, 
-  Building2, 
   UserCheck, 
   UserPlus, 
   X, 
   Phone, 
   RotateCcw, 
   Sparkles, 
-  MapPin,
-  BadgeCheck,
-  UserCheck2,
+  BadgeCheck, 
   Camera,
   XCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { QrScannerModal } from './QrScannerModal';
-import { UniversityCombobox } from './UniversityCombobox';
-import type { RsvpGuest, CreateRsvpInput, InstitutionCategory } from '../types';
+import { 
+  SCHOOL_UNITS, 
+  YAYASAN_NAME, 
+  ITBSS_NAME, 
+  type SchoolUnit,
+  type RsvpGuest, 
+  type CreateRsvpInput, 
+  type InstitutionCategory 
+} from '../types';
 
 interface GuestbookProps {
   guests: RsvpGuest[];
@@ -38,6 +42,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTab, setFilterTab] = useState<'all' | 'checked_in' | 'pending'>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [unitFilter, setUnitFilter] = useState<string>('all');
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [checkingInId, setCheckingInId] = useState<string | null>(null);
@@ -46,44 +51,49 @@ export const Guestbook: React.FC<GuestbookProps> = ({
   const [receptionistStaff, setReceptionistStaff] = useState('Panitia Meja Depan');
 
   // Walk-in form state
+  const [walkInKey, setWalkInKey] = useState<'sekolah' | 'yayasan' | 'itbss'>('sekolah');
+  const [walkInSchoolUnit, setWalkInSchoolUnit] = useState<SchoolUnit>('TK 1');
   const [walkInData, setWalkInData] = useState({
-    institution_category: 'universitas' as InstitutionCategory,
-    university_name: '',
+    institution_category: 'sekolah' as InstitutionCategory,
+    university_name: 'TK 1',
     pic_name: '',
     pic_phone: '',
     pic_position: '',
     attendee_count: 1,
-    presentation_topic: '',
-    notes: 'Pendaftaran Walk-in di Meja Resepsionis Restoran Gajah Mada',
+    notes: 'Presensi Walk-in di Meja Penerima Tamu Natal',
   });
   const [isSubmittingWalkIn, setIsSubmittingWalkIn] = useState(false);
   const [walkInError, setWalkInError] = useState<string | null>(null);
-  const [walkInLastUniv, setWalkInLastUniv] = useState<string>('');
-  const [walkInKey, setWalkInKey] = useState<'universitas' | 'guru' | 'panitia' | 'yayasan'>('universitas');
 
-  const handleWalkInCategoryChange = (key: 'universitas' | 'guru' | 'panitia' | 'yayasan') => {
+  const handleWalkInCategoryChange = (key: 'sekolah' | 'yayasan' | 'itbss') => {
     setWalkInKey(key);
-    let nextCategory: InstitutionCategory = 'universitas';
+    let nextCategory: InstitutionCategory = 'sekolah';
     let nextName = '';
 
     if (key === 'yayasan') {
       nextCategory = 'yayasan';
-      nextName = 'Yayasan Gereja Protestan Kampung Bali';
-    } else if (key === 'guru') {
+      nextName = YAYASAN_NAME;
+    } else if (key === 'itbss') {
+      nextCategory = 'itbss';
+      nextName = ITBSS_NAME;
+    } else {
       nextCategory = 'sekolah';
-      nextName = 'Guru Sekolah';
-    } else if (key === 'panitia') {
-      nextCategory = 'sekolah';
-      nextName = 'Panitia Career Day Sekolah';
-    } else if (key === 'universitas') {
-      nextCategory = 'universitas';
-      nextName = walkInLastUniv || '';
+      nextName = walkInSchoolUnit || 'TK 1';
     }
 
     setWalkInData((prev) => ({
       ...prev,
       institution_category: nextCategory,
       university_name: nextName,
+    }));
+  };
+
+  const handleWalkInSchoolUnitChange = (unit: SchoolUnit) => {
+    setWalkInSchoolUnit(unit);
+    setWalkInData((prev) => ({
+      ...prev,
+      institution_category: 'sekolah',
+      university_name: unit,
     }));
   };
 
@@ -98,43 +108,45 @@ export const Guestbook: React.FC<GuestbookProps> = ({
 
       if (!matchSearch) return false;
 
+      // Category filter
       if (categoryFilter !== 'all') {
-        if (categoryFilter === 'universitas' && guest.institution_category !== 'universitas') return false;
-        if (categoryFilter === 'yayasan' && guest.institution_category !== 'yayasan') return false;
-        if (categoryFilter === 'guru' && (guest.institution_category !== 'sekolah' || !guest.university_name.toLowerCase().includes('guru'))) return false;
-        if (categoryFilter === 'panitia' && (guest.institution_category !== 'sekolah' || guest.university_name.toLowerCase().includes('guru'))) return false;
         if (categoryFilter === 'sekolah' && guest.institution_category !== 'sekolah') return false;
+        if (categoryFilter === 'yayasan' && guest.institution_category !== 'yayasan') return false;
+        if (categoryFilter === 'itbss' && guest.institution_category !== 'itbss') return false;
+      }
+
+      // Unit filter
+      if (unitFilter !== 'all') {
+        if (guest.university_name.toLowerCase() !== unitFilter.toLowerCase()) return false;
       }
 
       if (filterTab === 'checked_in') return guest.is_checked_in;
       if (filterTab === 'pending') return !guest.is_checked_in && guest.attendance_status !== 'tidak_hadir';
       return true;
     });
-  }, [guests, searchTerm, filterTab, categoryFilter]);
+  }, [guests, searchTerm, filterTab, categoryFilter, unitFilter]);
 
   // Statistics
   const stats = useMemo(() => {
     const attending = guests.filter((g) => g.attendance_status === 'hadir');
     const checkedIn = guests.filter((g) => g.is_checked_in);
-    const totalPresentPax = checkedIn.reduce((sum, g) => sum + (g.attendee_count || 1), 0);
-    const totalExpectedPax = attending.reduce((sum, g) => sum + (g.attendee_count || 1), 0);
+    const sekolahCount = guests.filter((g) => g.institution_category === 'sekolah');
+    const yayasanCount = guests.filter((g) => g.institution_category === 'yayasan');
+    const itbssCount = guests.filter((g) => g.institution_category === 'itbss');
 
     return {
       totalGuests: guests.length,
       checkedInCount: checkedIn.length,
-      totalPresentPax,
-      totalExpectedPax,
+      sekolahCount: sekolahCount.length,
+      yayasanCount: yayasanCount.length,
+      itbssCount: itbssCount.length,
       percentage: attending.length > 0 ? Math.round((checkedIn.length / attending.length) * 100) : 0,
     };
   }, [guests]);
 
   const handleCheckInToggle = async (guest: RsvpGuest) => {
     if (guest.approval_status === 'rejected') {
-      alert(`⛔ Presensi Ditolak: Pendaftaran tamu ini (${guest.pic_name} - ${guest.university_name}) telah DITOLAK oleh panitia karena kuota kampus melebihi 2 orang.`);
-      return;
-    }
-    if (guest.approval_status === 'pending') {
-      alert(`⏳ Presensi Tertunda: Tamu ini masih menunggu persetujuan (status Pending). Silakan panitia menyetujui di tab Persetujuan Kuota terlebih dahulu sebelum check-in.`);
+      alert(`⛔ Presensi Ditolak: Pendaftaran tamu ini (${guest.pic_name} - ${guest.university_name}) dinonaktifkan oleh panitia.`);
       return;
     }
 
@@ -147,7 +159,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
           particleCount: 50,
           spread: 60,
           origin: { y: 0.7 },
-          colors: ['#10b981', '#3b82f6', '#6366f1'],
+          colors: ['#059669', '#10b981', '#3b82f6', '#f59e0b'],
         });
       }
     } finally {
@@ -160,7 +172,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
     setWalkInError(null);
 
     if (!walkInData.university_name.trim() || !walkInData.pic_name.trim() || !walkInData.pic_phone.trim()) {
-      setWalkInError('Nama instansi/universitas, nama PIC, dan no. WhatsApp wajib diisi.');
+      setWalkInError('Unit/instansi, nama peserta, dan no. WhatsApp wajib diisi.');
       return;
     }
 
@@ -173,10 +185,9 @@ export const Guestbook: React.FC<GuestbookProps> = ({
         pic_phone: walkInData.pic_phone,
         pic_position: walkInData.pic_position,
         attendance_status: 'hadir',
-        attendee_count: walkInData.attendee_count,
-        presentation_topic: walkInData.presentation_topic,
-        needs_projector: false,
+        attendee_count: 1,
         notes: walkInData.notes,
+        approval_status: 'approved',
       });
 
       if (res.error) {
@@ -184,17 +195,14 @@ export const Guestbook: React.FC<GuestbookProps> = ({
       } else if (res.data) {
         await onCheckIn(res.data.id, true, receptionistStaff);
         setIsWalkInModalOpen(false);
-        setWalkInLastUniv('');
-        setWalkInKey('universitas');
         setWalkInData({
-          institution_category: 'universitas',
-          university_name: '',
+          institution_category: 'sekolah',
+          university_name: 'TK 1',
           pic_name: '',
           pic_phone: '',
           pic_position: '',
           attendee_count: 1,
-          presentation_topic: '',
-          notes: 'Pendaftaran Walk-in di Meja Resepsionis Restoran Gajah Mada',
+          notes: 'Presensi Walk-in di Meja Penerima Tamu Natal',
         });
       }
     } catch (err: unknown) {
@@ -215,47 +223,28 @@ export const Guestbook: React.FC<GuestbookProps> = ({
   };
 
   return (
-    <div className="text-left space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       
-      {/* Top Desk Banner & Staf Input */}
-      <div className="bg-linear-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-lg border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3.5 sm:gap-4">
+      {/* Banner Meja Resepsionis */}
+      <div className="bg-linear-to-r from-emerald-900 via-teal-900 to-slate-900 text-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-lg border border-emerald-800/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              Meja Resepsionis
-            </span>
-            <span className="text-xs text-slate-400 flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-rose-400" />
-              Restoran Gajah Mada Pontianak
-            </span>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 text-[10px] font-bold uppercase tracking-wider mb-2 border border-emerald-400/30">
+            <Sparkles className="w-3 h-3 text-amber-300" />
+            Meja Penerima Tamu Natal
           </div>
-          <h2 className="text-lg sm:text-2xl font-black text-white">
-            Buku Tamu & Presensi Delegasi
+          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+            Presensi Acara Perayaan Natal
           </h2>
-          <p className="text-xs text-slate-300 mt-0.5">
-            Verifikasi kehadiran delegasi Universitas, Panitia Sekolah, & Yayasan saat tiba di lokasi.
+          <p className="text-xs sm:text-sm text-emerald-100/90 mt-1 max-w-xl">
+            Scan QR Code tiket digital peserta atau klik tombol check-in untuk mencatat kehadiran seketika.
           </p>
         </div>
 
-        {/* Input Staf Resepsionis & Tombol Aksi */}
-        <div className="flex flex-wrap items-center gap-2 bg-white/10 backdrop-blur-md p-2 rounded-2xl border border-white/10 w-full md:w-auto">
-          <div className="flex items-center gap-2 px-2.5 py-1 bg-black/20 rounded-xl flex-1 sm:flex-none">
-            <UserCheck2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <div>
-              <p className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Staf Meja:</p>
-              <input
-                type="text"
-                value={receptionistStaff}
-                onChange={(e) => setReceptionistStaff(e.target.value)}
-                placeholder="Nama Staf"
-                className="bg-transparent text-xs font-bold text-white border-b border-white/20 focus:border-emerald-400 outline-none w-24 sm:w-32 py-0.5"
-              />
-            </div>
-          </div>
-
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Tombol Buka Kamera Scanner QR */}
           <button
             onClick={() => setIsScannerOpen(true)}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-black shadow-md shadow-emerald-500/25 transition-all active:scale-[0.98]"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm shadow-md shadow-emerald-950/40 transition-all active:scale-[0.98] border border-emerald-400/30 cursor-pointer"
           >
             <Camera className="w-4 h-4 text-emerald-100" />
             <span>Scan QR Presensi</span>
@@ -263,7 +252,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
 
           <button
             onClick={() => setIsWalkInModalOpen(true)}
-            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold border border-white/20 transition-all active:scale-[0.98]"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold border border-white/20 transition-all active:scale-[0.98]"
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span>+ Walk-In</span>
@@ -274,10 +263,10 @@ export const Guestbook: React.FC<GuestbookProps> = ({
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
         <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Delegasi Tiba</p>
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sudah Hadir</p>
           <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
             <span className="text-xl sm:text-2xl font-black text-emerald-600">{stats.checkedInCount}</span>
-            <span className="text-[11px] sm:text-xs text-slate-400">/ {stats.totalGuests}</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">/ {stats.totalGuests} Orang</span>
           </div>
           <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2.5 overflow-hidden">
             <div 
@@ -288,63 +277,76 @@ export const Guestbook: React.FC<GuestbookProps> = ({
         </div>
 
         <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Hadir</p>
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unit Sekolah</p>
           <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
-            <span className="text-xl sm:text-2xl font-black text-indigo-600">{stats.totalPresentPax}</span>
-            <span className="text-[11px] sm:text-xs text-slate-400">Pax / Orang</span>
+            <span className="text-xl sm:text-2xl font-black text-teal-700">{stats.sekolahCount}</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">Peserta</span>
           </div>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">Restoran Gajah Mada</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">12 Unit Persekolahan</p>
         </div>
 
         <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Belum Tiba</p>
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Yayasan YGPKB</p>
           <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
-            <span className="text-xl sm:text-2xl font-black text-amber-500">
-              {Math.max(0, guests.filter(g => g.attendance_status === 'hadir' && !g.is_checked_in).length)}
-            </span>
-            <span className="text-[11px] sm:text-xs text-slate-400">Instansi</span>
+            <span className="text-xl sm:text-2xl font-black text-purple-700">{stats.yayasanCount}</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">Peserta</span>
           </div>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">Ditunggu kedatangan</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">Gereja & Pengurus</p>
         </div>
 
         <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Persentase</p>
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">ITBSS</p>
           <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
-            <span className="text-xl sm:text-2xl font-black text-slate-800">{stats.percentage}%</span>
+            <span className="text-xl sm:text-2xl font-black text-blue-700">{stats.itbssCount}</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">Peserta</span>
           </div>
-          <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-1.5 flex items-center gap-1">
-            <Sparkles className="w-3 h-3" /> Live Check-In
-          </p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">Institut Sabda Setia</p>
         </div>
       </div>
 
       {/* Search & Filter Toolbar */}
       <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-2.5 sm:gap-3">
         {/* Search Input */}
-        <div className="relative w-full md:w-80">
+        <div className="relative w-full md:w-72">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Cari kampus, PIC, no. HP, ID..."
-            className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-indigo-500 outline-none"
+            placeholder="Cari nama, unit, no. HP..."
+            className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-emerald-600 outline-none"
           />
         </div>
 
-        {/* Filter Pills */}
+        {/* Filter Dropdowns & Pills */}
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {/* Category Filter */}
           <select
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            onChange={(e) => {
+              setCategoryFilter(e.target.value);
+              setUnitFilter('all');
+            }}
             className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
           >
-            <option value="all">Semua Kategori</option>
-            <option value="universitas">Universitas Mitra</option>
-            <option value="guru">Guru Sekolah</option>
-            <option value="panitia">Panitia Sekolah</option>
-            <option value="yayasan">YGPKB</option>
+            <option value="all">Semua Instansi</option>
+            <option value="sekolah">Unit Sekolah</option>
+            <option value="yayasan">Yayasan YGPKB</option>
+            <option value="itbss">ITBSS</option>
+          </select>
+
+          {/* Unit Filter (12 Unit) */}
+          <select
+            value={unitFilter}
+            onChange={(e) => setUnitFilter(e.target.value)}
+            className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none max-w-[150px]"
+          >
+            <option value="all">Semua Unit</option>
+            {SCHOOL_UNITS.map((u) => (
+              <option key={u} value={u}>{u}</option>
+            ))}
+            <option value={YAYASAN_NAME}>YGPKB</option>
+            <option value={ITBSS_NAME}>ITBSS</option>
           </select>
 
           {/* Status Tabs */}
@@ -363,7 +365,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                 filterTab === 'checked_in' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500'
               }`}
             >
-              Tiba ({guests.filter(g => g.is_checked_in).length})
+              Sudah Hadir ({stats.checkedInCount})
             </button>
             <button
               onClick={() => setFilterTab('pending')}
@@ -371,28 +373,40 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                 filterTab === 'pending' ? 'bg-white text-amber-700 shadow-xs' : 'text-slate-500'
               }`}
             >
-              Belum ({guests.filter(g => g.attendance_status === 'hadir' && !g.is_checked_in).length})
+              Belum Hadir ({Math.max(0, stats.totalGuests - stats.checkedInCount)})
             </button>
           </div>
         </div>
       </div>
 
+      {/* Receptionist Staf Bar */}
+      <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+        <div className="flex items-center gap-1.5">
+          <span>Staf Resepsionis Aktif:</span>
+          <input
+            type="text"
+            value={receptionistStaff}
+            onChange={(e) => setReceptionistStaff(e.target.value)}
+            className="font-bold text-slate-800 bg-transparent border-b border-dashed border-slate-300 hover:border-slate-500 focus:border-emerald-600 outline-none px-1"
+          />
+        </div>
+        <span>Menampilkan {filteredGuests.length} dari {guests.length} peserta</span>
+      </div>
+
       {/* Guest Cards Grid */}
       {isLoading ? (
-        <div className="py-20 text-center">
-          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-          <p className="text-xs text-slate-500">Memuat data buku tamu...</p>
+        <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
+          <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-xs text-slate-500 font-medium">Memuat data absensi...</p>
         </div>
       ) : filteredGuests.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-          <Building2 className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-base font-bold text-slate-700">Tidak ada data tamu yang cocok</p>
-          <p className="text-xs text-slate-400 mt-1">
-            {searchTerm ? `Pencarian "${searchTerm}" tidak ditemukan.` : 'Belum ada data pada filter ini.'}
-          </p>
+        <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 p-6">
+          <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <h4 className="font-bold text-slate-700 text-sm">Tidak ada peserta ditemukan</h4>
+          <p className="text-xs text-slate-400 mt-1">Coba sesuaikan kata kunci pencarian atau filter unit di atas.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {filteredGuests.map((guest) => {
             const isAttending = guest.attendance_status === 'hadir';
             const isCurrentChecking = checkingInId === guest.id;
@@ -400,9 +414,9 @@ export const Guestbook: React.FC<GuestbookProps> = ({
             return (
               <div
                 key={guest.id}
-                className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between ${
+                className={`p-4 sm:p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between ${
                   guest.is_checked_in
-                    ? 'bg-emerald-50/40 border-emerald-300 shadow-xs'
+                    ? 'bg-emerald-50/50 border-emerald-300 shadow-xs'
                     : !isAttending
                     ? 'bg-slate-50 border-slate-200 opacity-60'
                     : 'bg-white border-slate-200 hover:border-slate-300 shadow-xs'
@@ -410,35 +424,38 @@ export const Guestbook: React.FC<GuestbookProps> = ({
               >
                 <div>
                   {/* Category badge & Status */}
-                  <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
                       <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md inline-block mb-1 ${
                         guest.institution_category === 'yayasan'
                           ? 'bg-purple-100 text-purple-700'
-                          : guest.institution_category === 'sekolah'
-                          ? (guest.university_name.toLowerCase().includes('guru') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')
-                          : 'bg-indigo-100 text-indigo-700'
+                          : guest.institution_category === 'itbss'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-emerald-100 text-emerald-800'
                       }`}>
                         {guest.institution_category === 'yayasan'
                           ? 'YGPKB'
-                          : guest.institution_category === 'sekolah'
-                          ? (guest.university_name.toLowerCase().includes('guru') ? 'Guru Sekolah' : 'Panitia Sekolah')
-                          : 'Universitas Mitra'}
+                          : guest.institution_category === 'itbss'
+                          ? 'ITBSS'
+                          : 'Unit Sekolah'}
                       </span>
 
-                      <h3 className="font-extrabold text-slate-900 text-base leading-snug">
+                      <h3 className="font-black text-slate-900 text-base leading-snug">
                         {guest.university_name}
                       </h3>
-                      <p className="text-xs text-slate-600 mt-1 flex items-center gap-1 font-medium">
+                      <p className="text-xs text-slate-800 mt-1 flex items-center gap-1 font-bold">
                         <UserCheck className="w-3.5 h-3.5 text-slate-400" />
                         {guest.pic_name}
+                        {guest.pic_position && (
+                          <span className="font-normal text-slate-500">({guest.pic_position})</span>
+                        )}
                       </p>
                     </div>
 
                     {/* Status Badge */}
                     {guest.is_checked_in ? (
                       <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-600 text-white shadow-xs">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Sudah Tiba
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Hadir
                       </span>
                     ) : isAttending ? (
                       <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -453,20 +470,13 @@ export const Guestbook: React.FC<GuestbookProps> = ({
 
                   {/* Details strip */}
                   {isAttending && (
-                    <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-                      <div className="flex items-center gap-3">
-                        <span className="flex items-center gap-1 font-bold text-slate-700">
-                          <Users className="w-3.5 h-3.5 text-indigo-500" />
-                          {guest.attendee_count} Pax
-                        </span>
-                      </div>
-
+                    <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                       {guest.pic_phone && (
                         <a
                           href={`https://wa.me/${guest.pic_phone.replace(/\D/g, '')}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-medium"
+                          className="text-emerald-700 hover:text-emerald-800 flex items-center gap-1 font-semibold"
                         >
                           <Phone className="w-3 h-3" />
                           {guest.pic_phone}
@@ -476,8 +486,8 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                   )}
 
                   {guest.notes && (
-                    <p className="text-xs text-slate-500 italic mt-2">
-                      Catatan: {guest.notes}
+                    <p className="text-[11px] text-slate-500 italic mt-2 bg-slate-50 p-2 rounded-lg">
+                      "{guest.notes}"
                     </p>
                   )}
                 </div>
@@ -489,11 +499,11 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                       <div className="text-xs text-emerald-800 font-semibold space-y-0.5">
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Tiba pukul {formatTime(guest.checked_in_at)}</span>
+                          <span>Tiba {formatTime(guest.checked_in_at)}</span>
                         </div>
                         {guest.checked_in_by && (
                           <p className="text-[10px] text-slate-400 pl-5">
-                            Diverifikasi oleh: <span className="text-slate-600 font-bold">{guest.checked_in_by}</span>
+                            Petugas: <span className="text-slate-600 font-bold">{guest.checked_in_by}</span>
                           </p>
                         )}
                       </div>
@@ -510,27 +520,20 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                   ) : !isAttending ? (
                     <span className="text-xs text-slate-400 italic">Konfirmasi tidak hadir</span>
                   ) : guest.approval_status === 'rejected' ? (
-                    <div className="w-full py-2.5 px-4 rounded-xl bg-rose-50 border border-rose-200 text-center">
+                    <div className="w-full py-2 px-3 rounded-xl bg-rose-50 border border-rose-200 text-center">
                       <span className="text-xs font-bold text-rose-700 flex items-center justify-center gap-1.5">
                         <XCircle className="w-4 h-4 text-rose-500" />
-                        Pendaftaran Ditolak Panitia (Kuota &ge; 2)
-                      </span>
-                    </div>
-                  ) : guest.approval_status === 'pending' ? (
-                    <div className="w-full py-2.5 px-4 rounded-xl bg-amber-50 border border-amber-200 text-center">
-                      <span className="text-xs font-bold text-amber-700 flex items-center justify-center gap-1.5">
-                        <Clock className="w-4 h-4 text-amber-600 animate-pulse" />
-                        Menunggu Persetujuan Kuota
+                        Pendaftaran Dinonaktifkan
                       </span>
                     </div>
                   ) : (
                     <button
                       onClick={() => handleCheckInToggle(guest)}
                       disabled={isCurrentChecking}
-                      className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs ${
+                      className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer ${
                         isCurrentChecking
                           ? 'bg-emerald-400 text-white cursor-wait'
-                          : 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.98]'
+                          : 'bg-emerald-700 hover:bg-emerald-800 text-white active:scale-[0.98]'
                       }`}
                     >
                       {isCurrentChecking ? (
@@ -538,7 +541,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                       ) : (
                         <>
                           <BadgeCheck className="w-4 h-4" />
-                          <span>Check-In Tamu (Tiba di Restoran Gajah Mada)</span>
+                          <span>Check-In Peserta (Tiba di Lokasi)</span>
                         </>
                       )}
                     </button>
@@ -563,12 +566,12 @@ export const Guestbook: React.FC<GuestbookProps> = ({
             </button>
 
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
                 <UserPlus className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-900">Registrasi Tamu Walk-In</h3>
-                <p className="text-xs text-slate-500">Resepsionis Restoran Gajah Mada Pontianak</p>
+                <h3 className="text-lg font-bold text-slate-900">Registrasi Presensi Walk-In</h3>
+                <p className="text-xs text-slate-500">Meja Penerima Tamu Perayaan Natal</p>
               </div>
             </div>
 
@@ -580,66 +583,86 @@ export const Guestbook: React.FC<GuestbookProps> = ({
 
             <form onSubmit={handleWalkInSubmit} className="space-y-4 text-xs sm:text-sm">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Kategori Instansi</label>
-                <select
-                  value={walkInKey}
-                  onChange={(e) => handleWalkInCategoryChange(e.target.value as 'universitas' | 'guru' | 'panitia' | 'yayasan')}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 outline-none bg-white text-xs font-semibold"
-                >
-                  <option value="universitas">Universitas Mitra</option>
-                  <option value="guru">Guru Sekolah</option>
-                  <option value="panitia">Panitia Sekolah</option>
-                  <option value="yayasan">YGPKB</option>
-                </select>
+                <label className="block font-bold text-slate-700 mb-1">Kategori Bagian</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleWalkInCategoryChange('sekolah')}
+                    className={`p-2 rounded-xl border text-xs font-bold text-center ${
+                      walkInKey === 'sekolah' ? 'bg-emerald-50 border-emerald-600 text-emerald-900' : 'bg-white border-slate-200 text-slate-600'
+                    }`}
+                  >
+                    Unit Sekolah
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleWalkInCategoryChange('yayasan')}
+                    className={`p-2 rounded-xl border text-xs font-bold text-center ${
+                      walkInKey === 'yayasan' ? 'bg-purple-50 border-purple-600 text-purple-900' : 'bg-white border-slate-200 text-slate-600'
+                    }`}
+                  >
+                    YGPKB
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleWalkInCategoryChange('itbss')}
+                    className={`p-2 rounded-xl border text-xs font-bold text-center ${
+                      walkInKey === 'itbss' ? 'bg-blue-50 border-blue-600 text-blue-900' : 'bg-white border-slate-200 text-slate-600'
+                    }`}
+                  >
+                    ITBSS
+                  </button>
+                </div>
               </div>
 
+              {walkInKey === 'sekolah' && (
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Pilih Unit Sekolah (12 Unit) *</label>
+                  <select
+                    value={walkInSchoolUnit}
+                    onChange={(e) => handleWalkInSchoolUnitChange(e.target.value as SchoolUnit)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:border-emerald-600 outline-none bg-white"
+                  >
+                    {SCHOOL_UNITS.map((u) => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {walkInKey === 'yayasan' && (
+                <div className="p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-900 font-semibold">
+                  {YAYASAN_NAME}
+                </div>
+              )}
+
+              {walkInKey === 'itbss' && (
+                <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 font-semibold">
+                  {ITBSS_NAME}
+                </div>
+              )}
+
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  {walkInKey === 'universitas'
-                    ? 'Nama Universitas *'
-                    : walkInKey === 'guru'
-                    ? 'Keterangan / Bidang Guru *'
-                    : walkInKey === 'panitia'
-                    ? 'Divisi / Unit Panitia Sekolah *'
-                    : 'Nama Lembaga / YGPKB *'}
-                </label>
-                {walkInKey === 'universitas' ? (
-                  <UniversityCombobox
-                    value={walkInData.university_name}
-                    onChange={(val) => {
-                      setWalkInLastUniv(val);
-                      setWalkInData((prev) => ({ ...prev, university_name: val }));
-                    }}
-                    placeholder="Ketik untuk mencari atau pilih universitas..."
-                  />
-                ) : (
-                  <input
-                    type="text"
-                    value={walkInData.university_name}
-                    onChange={(e) => setWalkInData({ ...walkInData, university_name: e.target.value })}
-                    placeholder={
-                      walkInKey === 'guru'
-                        ? 'Guru Sekolah / Guru BK / Guru Mata Pelajaran'
-                        : walkInKey === 'panitia'
-                        ? 'Panitia Career Day Sekolah'
-                        : 'Yayasan Gereja Protestan Kampung Bali'
-                    }
-                    required
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:border-indigo-500 outline-none"
-                  />
-                )}
+                <label className="block font-bold text-slate-700 mb-1">Nama Lengkap Peserta *</label>
+                <input
+                  type="text"
+                  value={walkInData.pic_name}
+                  onChange={(e) => setWalkInData({ ...walkInData, pic_name: e.target.value })}
+                  placeholder="Nama Peserta / Guru / Staf"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:border-emerald-600 outline-none"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Nama Tamu / PIC *</label>
+                  <label className="block font-bold text-slate-700 mb-1">Jabatan / Peran</label>
                   <input
                     type="text"
-                    value={walkInData.pic_name}
-                    onChange={(e) => setWalkInData({ ...walkInData, pic_name: e.target.value })}
-                    placeholder="Nama Lengkap"
-                    required
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:border-indigo-500 outline-none"
+                    value={walkInData.pic_position}
+                    onChange={(e) => setWalkInData({ ...walkInData, pic_position: e.target.value })}
+                    placeholder="Guru / Tendik / Dosen"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:border-emerald-600 outline-none"
                   />
                 </div>
                 <div>
@@ -648,9 +671,9 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                     type="tel"
                     value={walkInData.pic_phone}
                     onChange={(e) => setWalkInData({ ...walkInData, pic_phone: e.target.value })}
-                    placeholder="081234567890"
+                    placeholder="0812xxxxxxxx"
                     required
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:border-indigo-500 outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:border-emerald-600 outline-none"
                   />
                 </div>
               </div>
@@ -666,7 +689,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmittingWalkIn}
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-200 disabled:bg-emerald-400"
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-md shadow-emerald-200 disabled:bg-emerald-400 cursor-pointer"
                 >
                   {isSubmittingWalkIn ? 'Mendaftarkan...' : 'Simpan & Check-In'}
                 </button>
@@ -676,7 +699,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
         </div>
       )}
 
-      {/* QR SCANNER MODAL - ABSENSI OTOMATIS */}
+      {/* QR SCANNER MODAL */}
       <QrScannerModal
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}

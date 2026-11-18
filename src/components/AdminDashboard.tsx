@@ -20,14 +20,15 @@ import {
   LayoutDashboard,
   Globe,
   User,
-  Mail,
+  BarChart3,
+  Sparkles,
   QrCode as QrIcon
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { Guestbook } from './Guestbook';
-import { UniversityCombobox } from './UniversityCombobox';
 import logoIcon from '../assets/logoicon.png';
 import type { RsvpGuest, CreateRsvpInput, UpdateRsvpInput, AttendanceStatus, InstitutionCategory } from '../types';
+import { SCHOOL_UNITS, YAYASAN_NAME, ITBSS_NAME, ALL_INSTITUTION_UNITS } from '../types';
 
 interface AdminDashboardProps {
   guests: RsvpGuest[];
@@ -54,12 +55,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onLogoutAdmin,
   onGoToPublicPage,
 }) => {
-  const [adminTab, setAdminTab] = useState<'guestbook' | 'master' | 'pending'>('guestbook');
+  const [adminTab, setAdminTab] = useState<'guestbook' | 'master' | 'rekap' | 'pending'>('guestbook');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [unitFilter, setUnitFilter] = useState<string>('all');
   const [checkInFilter, setCheckInFilter] = useState<string>('all');
-  const [approvalFilter, setApprovalFilter] = useState<string>('all');
 
   const pendingGuests = useMemo(() => {
     return guests.filter((g) => g.approval_status === 'pending');
@@ -74,9 +75,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [modalQrUrl, setModalQrUrl] = useState<string | null>(null);
 
   // Form states
+  const [adminKey, setAdminKey] = useState<'sekolah' | 'yayasan' | 'itbss'>('sekolah');
   const [formData, setFormData] = useState<CreateRsvpInput>({
-    institution_category: 'universitas',
-    university_name: '',
+    institution_category: 'sekolah',
+    university_name: SCHOOL_UNITS[0],
     pic_name: '',
     pic_position: '',
     pic_phone: '',
@@ -91,26 +93,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
-  const [adminLastUniv, setAdminLastUniv] = useState<string>('');
-  const [adminKey, setAdminKey] = useState<'universitas' | 'guru' | 'panitia' | 'yayasan'>('universitas');
 
-  const handleAdminCategoryChange = (key: 'universitas' | 'guru' | 'panitia' | 'yayasan') => {
+  const handleAdminCategoryChange = (key: 'sekolah' | 'yayasan' | 'itbss') => {
     setAdminKey(key);
-    let nextCategory: InstitutionCategory = 'universitas';
+    let nextCategory: InstitutionCategory = 'sekolah';
     let nextName = '';
 
     if (key === 'yayasan') {
       nextCategory = 'yayasan';
-      nextName = 'Yayasan Gereja Protestan Kampung Bali';
-    } else if (key === 'guru') {
+      nextName = YAYASAN_NAME;
+    } else if (key === 'itbss') {
+      nextCategory = 'itbss';
+      nextName = ITBSS_NAME;
+    } else {
       nextCategory = 'sekolah';
-      nextName = 'Guru Sekolah';
-    } else if (key === 'panitia') {
-      nextCategory = 'sekolah';
-      nextName = 'Panitia Career Day Sekolah';
-    } else if (key === 'universitas') {
-      nextCategory = 'universitas';
-      nextName = adminLastUniv || '';
+      nextName = SCHOOL_UNITS[0];
     }
 
     setFormData((prev) => ({
@@ -127,26 +124,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         g.university_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         g.pic_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         g.pic_phone.includes(searchTerm) ||
-        (g.presentation_topic && g.presentation_topic.toLowerCase().includes(searchTerm.toLowerCase()));
+        (g.pic_position && g.pic_position.toLowerCase().includes(searchTerm.toLowerCase()));
 
       if (!matchSearch) return false;
 
       if (categoryFilter !== 'all') {
-        if (categoryFilter === 'universitas' && g.institution_category !== 'universitas') return false;
-        if (categoryFilter === 'yayasan' && g.institution_category !== 'yayasan') return false;
-        if (categoryFilter === 'guru' && (g.institution_category !== 'sekolah' || !g.university_name.toLowerCase().includes('guru'))) return false;
-        if (categoryFilter === 'panitia' && (g.institution_category !== 'sekolah' || g.university_name.toLowerCase().includes('guru'))) return false;
         if (categoryFilter === 'sekolah' && g.institution_category !== 'sekolah') return false;
+        if (categoryFilter === 'yayasan' && g.institution_category !== 'yayasan') return false;
+        if (categoryFilter === 'itbss' && g.institution_category !== 'itbss') return false;
+      }
+
+      if (unitFilter !== 'all') {
+        if (g.university_name !== unitFilter) return false;
       }
 
       if (statusFilter !== 'all' && g.attendance_status !== statusFilter) return false;
       if (checkInFilter === 'checked_in' && !g.is_checked_in) return false;
       if (checkInFilter === 'not_checked_in' && g.is_checked_in) return false;
-      if (approvalFilter !== 'all' && (g.approval_status || 'approved') !== approvalFilter) return false;
 
       return true;
     });
-  }, [guests, searchTerm, categoryFilter, statusFilter, checkInFilter, approvalFilter]);
+  }, [guests, searchTerm, categoryFilter, unitFilter, statusFilter, checkInFilter]);
 
   // Key KPI metrics
   const kpis = useMemo(() => {
@@ -156,7 +154,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const checkedIn = guests.filter((g) => g.is_checked_in);
     const pending = guests.filter((g) => g.approval_status === 'pending');
     const totalPaxHadir = hadir.reduce((sum, g) => sum + (g.attendee_count || 1), 0);
-    const projectorCount = hadir.filter((g) => g.needs_projector).length;
+
+    const sekolahGuests = guests.filter((g) => g.institution_category === 'sekolah');
+    const yayasanGuests = guests.filter((g) => g.institution_category === 'yayasan');
+    const itbssGuests = guests.filter((g) => g.institution_category === 'itbss');
 
     return {
       total,
@@ -165,27 +166,55 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       checkedInCount: checkedIn.length,
       pendingCount: pending.length,
       totalPaxHadir,
-      projectorCount,
+      sekolahCount: sekolahGuests.length,
+      yayasanCount: yayasanGuests.length,
+      itbssCount: itbssGuests.length,
     };
+  }, [guests]);
+
+  // Unit Breakdown statistics for 12 School Units + YGPKB + ITBSS
+  const unitStats = useMemo(() => {
+    return ALL_INSTITUTION_UNITS.map((unit) => {
+      const unitGuests = guests.filter((g) => g.university_name === unit);
+      const hadirGuests = unitGuests.filter((g) => g.attendance_status === 'hadir');
+      const checkedInGuests = unitGuests.filter((g) => g.is_checked_in);
+      const totalPax = hadirGuests.reduce((sum, g) => sum + (g.attendee_count || 1), 0);
+      const checkInRate = hadirGuests.length > 0 
+        ? Math.round((checkedInGuests.length / hadirGuests.length) * 100) 
+        : 0;
+
+      let category: 'sekolah' | 'yayasan' | 'itbss' = 'sekolah';
+      if (unit === YAYASAN_NAME) category = 'yayasan';
+      else if (unit === ITBSS_NAME) category = 'itbss';
+
+      return {
+        unit,
+        category,
+        totalRegistered: unitGuests.length,
+        hadirCount: hadirGuests.length,
+        checkedInCount: checkedInGuests.length,
+        totalPax,
+        checkInRate,
+      };
+    });
   }, [guests]);
 
   // Open QR modal
   const handleOpenQr = (guest: RsvpGuest) => {
     if (guest.approval_status === 'rejected') {
-      alert(`⛔ Pendaftaran ${guest.pic_name} (${guest.university_name}) DITOLAK oleh panitia karena melebihi kuota 2 orang. Tamu yang ditolak tidak memiliki QR Code tiket.`);
+      alert(`⛔ Pendaftaran ${guest.pic_name} (${guest.university_name}) ditolak oleh panitia.`);
       return;
     }
     if (guest.approval_status === 'pending') {
-      alert(`⏳ Pendaftaran ${guest.pic_name} (${guest.university_name}) masih PENDING. QR Code baru aktif setelah disetujui panitia.`);
+      alert(`⏳ Pendaftaran ${guest.pic_name} (${guest.university_name}) masih PENDING.`);
       return;
     }
     setQrModalGuest(guest);
     const qrData = JSON.stringify({
-      event: 'Makrab Career Day 2026',
-      venue: 'Restoran Gajah Mada Pontianak',
+      event: 'Perayaan Natal Bersama YGPKB',
       id: guest.id,
       name: guest.pic_name,
-      inst: guest.university_name,
+      unit: guest.university_name,
       cat: guest.institution_category,
       pax: guest.attendee_count,
     });
@@ -196,20 +225,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleOpenEdit = (guest: RsvpGuest) => {
     setEditingGuest(guest);
-    if (guest.institution_category === 'universitas') {
-      setAdminKey('universitas');
-      setAdminLastUniv(guest.university_name);
-    } else if (guest.institution_category === 'yayasan') {
+    if (guest.institution_category === 'yayasan') {
       setAdminKey('yayasan');
-      setAdminLastUniv('');
+    } else if (guest.institution_category === 'itbss') {
+      setAdminKey('itbss');
     } else {
-      if (guest.university_name.toLowerCase().includes('guru')) {
-        setAdminKey('guru');
-      } else {
-        setAdminKey('panitia');
-      }
-      setAdminLastUniv('');
+      setAdminKey('sekolah');
     }
+
     setFormData({
       institution_category: guest.institution_category,
       university_name: guest.university_name,
@@ -230,11 +253,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleOpenCreate = () => {
     setEditingGuest(null);
-    setAdminKey('universitas');
-    setAdminLastUniv('');
+    setAdminKey('sekolah');
     setFormData({
-      institution_category: 'universitas',
-      university_name: '',
+      institution_category: 'sekolah',
+      university_name: SCHOOL_UNITS[0],
       pic_name: '',
       pic_position: '',
       pic_phone: '',
@@ -256,7 +278,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setModalError(null);
 
     if (!formData.university_name.trim() || !formData.pic_name.trim() || !formData.pic_phone.trim()) {
-      setModalError('Nama universitas/lembaga, nama PIC, dan no. WhatsApp wajib diisi.');
+      setModalError('Unit / Lembaga, nama peserta, dan no. WhatsApp wajib diisi.');
       return;
     }
 
@@ -302,20 +324,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const headers = [
       'ID',
       'Kategori',
-      'Nama Universitas / Lembaga',
-      'Nama PIC',
-      'Jabatan',
+      'Unit / Lembaga',
+      'Nama Peserta',
+      'Jabatan / Peran',
       'No WhatsApp',
       'Email',
       'Status Kehadiran',
       'Jumlah Pax',
-      'Rekan Pendamping',
-      'Dietary / Konsumsi',
-      'Topik Presentasi',
-      'Butuh Proyektor',
       'Catatan',
-      'Sudah Check In (Restoran Gajah Mada)',
-      'Waktu Check In',
+      'Presensi Kehadiran',
+      'Waktu Presensi',
+      'Dicatat Oleh',
       'Waktu Pendaftaran',
     ];
 
@@ -329,13 +348,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       `"${(g.pic_email || '').replace(/"/g, '""')}"`,
       `"${g.attendance_status}"`,
       g.attendee_count,
-      `"${(g.additional_attendees || '').replace(/"/g, '""')}"`,
-      `"${(g.dietary_requirements || '').replace(/"/g, '""')}"`,
-      `"${(g.presentation_topic || '').replace(/"/g, '""')}"`,
-      g.needs_projector ? 'Ya' : 'Tidak',
       `"${(g.notes || '').replace(/"/g, '""')}"`,
-      g.is_checked_in ? 'Ya' : 'Tidak',
+      g.is_checked_in ? 'Hadir' : 'Belum Hadir',
       g.checked_in_at ? `"${new Date(g.checked_in_at).toLocaleString('id-ID')}"` : '""',
+      `"${(g.checked_in_by || '').replace(/"/g, '""')}"`,
       `"${new Date(g.created_at).toLocaleString('id-ID')}"`,
     ]);
 
@@ -343,7 +359,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Makrab_Career_Day_Restoran_Gajah_Mada_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `Presensi_Natal_Internal_YGPKB_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -356,23 +372,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div className="flex items-start gap-3 sm:gap-4">
           <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-white p-1 border border-slate-200 shadow-xs flex items-center justify-center shrink-0">
-            <img src={logoIcon} alt="Logo Career Day" className="w-full h-full object-contain" />
+            <img src={logoIcon} alt="Logo Perayaan Natal" className="w-full h-full object-contain" />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-1.5 mb-1">
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-900 text-indigo-100">
-                Admin Portal
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-900 text-emerald-100 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-amber-300" />
+                Admin Presensi Natal
               </span>
               <span className="text-[11px] sm:text-xs text-slate-500 flex items-center gap-1">
                 <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
-                Restoran Gajah Mada
+                Perayaan Natal Bersama
               </span>
             </div>
             <h1 className="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight leading-tight">
-              Dashboard Tamu Makrab 2026
+              Dashboard Presensi Perayaan Natal Internal
             </h1>
             <p className="text-[11px] sm:text-sm text-slate-500 mt-0.5">
-              Universitas Mitra • Guru • Panitia Sekolah • YGPKB
+              12 Unit Sekolah • Yayasan YGPKB • ITBSS
             </p>
           </div>
         </div>
@@ -381,10 +398,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
           <button
             onClick={handleOpenCreate}
-            className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 px-3.5 py-2.5 sm:py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm shadow-indigo-200 transition-all active:scale-[0.98]"
+            className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1.5 px-3.5 py-2.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm shadow-emerald-200 transition-all active:scale-[0.98]"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Tambah Tamu Manual</span>
+            <span>+ Tambah Peserta Manual</span>
           </button>
 
           <button
@@ -398,10 +415,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <button
             onClick={onGoToPublicPage}
             className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition-all active:scale-[0.98]"
-            title="Lihat formulir RSVP publik"
+            title="Lihat formulir pendaftaran publik"
           >
-            <Globe className="w-4 h-4 text-indigo-600" />
-            <span>Web Publik</span>
+            <Globe className="w-4 h-4 text-emerald-600" />
+            <span>Form Publik</span>
           </button>
 
           <div className="col-span-2 sm:col-span-1 flex items-center gap-2">
@@ -410,7 +427,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               title="Muat ulang data"
               className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 p-2 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 transition-all active:scale-[0.98] text-xs font-semibold"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-indigo-600' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-emerald-600' : ''}`} />
               <span className="sm:hidden">Refresh Data</span>
             </button>
 
@@ -426,51 +443,60 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
-      {/* Subtab Switcher (Responsive: 3 tombol sejajar di HP) */}
+      {/* Subtab Switcher */}
       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 bg-slate-200/60 p-1 sm:p-1.5 rounded-2xl mb-4 sm:mb-6 w-full sm:w-fit border border-slate-200">
         <button
           onClick={() => setAdminTab('guestbook')}
           className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
             adminTab === 'guestbook'
-              ? 'bg-white text-indigo-600 shadow-xs'
+              ? 'bg-white text-emerald-700 shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <BookOpenCheck className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline">Presensi Buku Tamu (Meja Resepsionis)</span>
-          <span className="sm:hidden">Buku Tamu</span>
+          <BookOpenCheck className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span className="hidden sm:inline">Presensi Meja Depan (Buku Tamu)</span>
+          <span className="sm:hidden">Meja Depan</span>
         </button>
 
         <button
           onClick={() => setAdminTab('master')}
           className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
             adminTab === 'master'
-              ? 'bg-white text-indigo-600 shadow-xs'
+              ? 'bg-white text-emerald-700 shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <LayoutDashboard className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline">Master Data & Rekap Konsumsi</span>
+          <LayoutDashboard className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span className="hidden sm:inline">Master Data Peserta</span>
           <span className="sm:hidden">Master Data</span>
         </button>
 
         <button
-          onClick={() => setAdminTab('pending')}
-          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all relative ${
-            adminTab === 'pending'
-              ? 'bg-white text-amber-600 shadow-xs'
+          onClick={() => setAdminTab('rekap')}
+          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+            adminTab === 'rekap'
+              ? 'bg-white text-emerald-700 shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <Clock className="w-4 h-4 shrink-0 text-amber-500" />
-          <span className="hidden sm:inline">Persetujuan Kuota</span>
-          <span className="sm:hidden">Approval</span>
-          {pendingGuests.length > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-extrabold animate-pulse">
-              {pendingGuests.length}
-            </span>
-          )}
+          <BarChart3 className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span className="hidden sm:inline">Rekap Per Unit (14 Unit)</span>
+          <span className="sm:hidden">Rekap Unit</span>
         </button>
+
+        {pendingGuests.length > 0 && (
+          <button
+            onClick={() => setAdminTab('pending')}
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all relative ${
+              adminTab === 'pending'
+                ? 'bg-white text-amber-600 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Clock className="w-4 h-4 shrink-0 text-amber-500" />
+            <span>Pending ({pendingGuests.length})</span>
+          </button>
+        )}
       </div>
 
       {adminTab === 'guestbook' ? (
@@ -480,7 +506,87 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           onCheckIn={onCheckInToggle}
           onAddWalkIn={onCreateGuest}
         />
+      ) : adminTab === 'rekap' ? (
+        /* REKAP KEHADIRAN PER UNIT */
+        <div className="space-y-4 text-left">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-2 rounded-xl bg-emerald-100 text-emerald-700">
+                  <BarChart3 className="w-5 h-5" />
+                </span>
+                <h2 className="text-base sm:text-lg font-black text-slate-900">
+                  Rekap Kehadiran Per Unit & Lembaga
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Distribusi kehadiran 12 Unit Sekolah, Yayasan Gereja Protestan Kampung Bali, dan ITBSS.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-bold text-emerald-800">
+                Total Hadir: {kpis.checkedInCount} / {kpis.hadirCount} Peserta
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+            {unitStats.map((item) => (
+              <div
+                key={item.unit}
+                className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-5 flex flex-col justify-between hover:border-emerald-300 transition-all"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
+                      item.category === 'yayasan'
+                        ? 'bg-purple-100 text-purple-700'
+                        : item.category === 'itbss'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {item.category === 'yayasan' ? 'Yayasan' : item.category === 'itbss' ? 'Perguruan Tinggi' : 'Unit Sekolah'}
+                    </span>
+                    <span className="text-xs font-bold text-slate-400">
+                      {item.checkInRate}% Tiba
+                    </span>
+                  </div>
+
+                  <h3 className="font-extrabold text-slate-900 text-base leading-tight mb-2">
+                    {item.unit}
+                  </h3>
+
+                  {/* Progress Bar */}
+                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-3">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        item.checkInRate >= 80 ? 'bg-emerald-500' : item.checkInRate >= 40 ? 'bg-teal-500' : 'bg-amber-500'
+                      }`}
+                      style={{ width: `${item.checkInRate}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 text-center text-xs">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 block uppercase">Terdaftar</span>
+                    <span className="font-black text-slate-800 text-sm">{item.totalRegistered}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 block uppercase">Bisa Hadir</span>
+                    <span className="font-black text-slate-800 text-sm">{item.hadirCount}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-emerald-600 block uppercase">Sudah Tiba</span>
+                    <span className="font-black text-emerald-600 text-sm">{item.checkedInCount}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       ) : adminTab === 'pending' ? (
+        /* PENDING TAB */
         <div className="space-y-4 text-left">
           <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -489,15 +595,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <Clock className="w-5 h-5" />
                 </span>
                 <h2 className="text-base sm:text-lg font-black text-slate-900">
-                  Persetujuan Delegasi Tambahan (Melebihi Kuota 2 Orang)
+                  Pendaftaran Menunggu Persetujuan
                 </h2>
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                Daftar perwakilan universitas mitra yang mendaftar melebihi batas kuota 2 orang per instansi dan memerlukan persetujuan panitia.
+                Daftar pendaftaran yang memerlukan persetujuan panitia.
               </p>
             </div>
             <div className="px-3.5 py-1.5 bg-amber-50 border border-amber-200 rounded-xl text-xs font-bold text-amber-800 self-start sm:self-auto">
-              Total Pending: {pendingGuests.length} Delegasi
+              Total Pending: {pendingGuests.length} Pendaftaran
             </div>
           </div>
 
@@ -506,594 +612,514 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
               <p className="font-bold text-slate-700 text-sm">Tidak Ada Pendaftaran yang Menunggu Persetujuan</p>
               <p className="text-xs text-slate-400 mt-1">
-                Semua delegasi universitas yang terdaftar telah sesuai dengan batas kuota 2 orang.
+                Semua peserta telah disetujui untuk perayaan Natal.
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
-              {pendingGuests.map((guest) => {
-                const approvedFromSameUniv = guests.filter(
-                  (g) =>
-                    g.institution_category === 'universitas' &&
-                    g.university_name.toLowerCase().trim() === guest.university_name.toLowerCase().trim() &&
-                    g.attendance_status === 'hadir' &&
-                    g.approval_status !== 'rejected' &&
-                    g.id !== guest.id
-                );
+              {pendingGuests.map((guest) => (
+                <div
+                  key={guest.id}
+                  className="bg-white rounded-2xl border-2 border-amber-200 shadow-xs p-4 sm:p-5 space-y-3 relative"
+                >
+                  <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
+                      Menunggu Approval
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      {new Date(guest.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}
+                    </span>
+                  </div>
 
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 text-base">
+                      {guest.university_name}
+                    </h3>
+                    <p className="text-xs font-bold text-slate-700 mt-1 flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{guest.pic_name}</span>
+                      {guest.pic_position && <span className="text-slate-400 font-normal">({guest.pic_position})</span>}
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <a
+                        href={`https://wa.me/${guest.pic_phone.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition-colors"
+                      >
+                        <Phone className="w-3 h-3 text-emerald-600" />
+                        <span>{guest.pic_phone}</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  {guest.notes && (
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs text-slate-600 italic">
+                      <span className="font-bold not-italic text-slate-400 text-[10px] block uppercase mb-0.5">Catatan:</span>
+                      "{guest.notes}"
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                    <button
+                      onClick={() => onApproveGuest && onApproveGuest(guest.id, 'approved')}
+                      className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>✓ Setujui (Approve)</span>
+                    </button>
+
+                    <button
+                      onClick={() => onApproveGuest && onApproveGuest(guest.id, 'rejected')}
+                      className="py-2.5 px-3 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      <span>✕ Tolak</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* MASTER DATA TAB */
+        <>
+          {/* KPI Cards Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5 mb-4 sm:mb-6">
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+              <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Terdaftar</p>
+              <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+                <span className="text-xl sm:text-2xl font-black text-slate-900">{kpis.total}</span>
+                <span className="text-[11px] sm:text-xs text-slate-400">Orang</span>
+              </div>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">12 Unit, Yayasan, ITBSS</p>
+            </div>
+
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+              <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Bisa Hadir</p>
+              <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+                <span className="text-xl sm:text-2xl font-black text-emerald-600">{kpis.hadirCount}</span>
+                <span className="text-[11px] sm:text-xs text-slate-400">Peserta</span>
+              </div>
+              <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-1.5 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 shrink-0" /> Terkonfirmasi Hadir
+              </p>
+            </div>
+
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs bg-linear-to-br from-emerald-50/50 to-white">
+              <p className="text-[10px] sm:text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Pax Konsumsi</p>
+              <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+                <span className="text-xl sm:text-2xl font-black text-emerald-700">{kpis.totalPaxHadir}</span>
+                <span className="text-[11px] sm:text-xs text-emerald-600">Porsi</span>
+              </div>
+              <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-1.5 flex items-center gap-1">
+                <Utensils className="w-3 h-3 shrink-0" /> Konsumsi Natal
+              </p>
+            </div>
+
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+              <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sudah Tiba</p>
+              <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+                <span className="text-xl sm:text-2xl font-black text-teal-600">{kpis.checkedInCount}</span>
+                <span className="text-[11px] sm:text-xs text-slate-400">/ {kpis.hadirCount}</span>
+              </div>
+              <p className="text-[10px] sm:text-[11px] text-teal-600 font-medium mt-1.5 flex items-center gap-1">
+                <Clock className="w-3 h-3 shrink-0" /> Presensi QR
+              </p>
+            </div>
+
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs col-span-2 sm:col-span-1">
+              <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Berhalangan</p>
+              <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+                <span className="text-xl sm:text-2xl font-black text-rose-500">{kpis.tidakHadirCount}</span>
+                <span className="text-[11px] sm:text-xs text-slate-400">Orang</span>
+              </div>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">Tidak dapat hadir</p>
+            </div>
+          </div>
+
+          {/* Filter and Search Bar */}
+          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 sm:gap-3">
+            <div className="relative w-full md:w-72">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Cari unit, nama peserta, WhatsApp..."
+                className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-emerald-500 outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 w-full md:w-auto">
+              {/* Category */}
+              <select
+                value={categoryFilter}
+                onChange={(e) => {
+                  setCategoryFilter(e.target.value);
+                  setUnitFilter('all');
+                }}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
+              >
+                <option value="all">Semua Kategori</option>
+                <option value="sekolah">Unit Sekolah (12 Unit)</option>
+                <option value="yayasan">Yayasan YGPKB</option>
+                <option value="itbss">ITBSS</option>
+              </select>
+
+              {/* Unit Specific Filter */}
+              <select
+                value={unitFilter}
+                onChange={(e) => setUnitFilter(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
+              >
+                <option value="all">Semua Unit</option>
+                {categoryFilter === 'all' || categoryFilter === 'sekolah' ? (
+                  <optgroup label="Unit Sekolah (12 Unit)">
+                    {SCHOOL_UNITS.map((u) => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </optgroup>
+                ) : null}
+                {categoryFilter === 'all' || categoryFilter === 'yayasan' ? (
+                  <optgroup label="Yayasan">
+                    <option value={YAYASAN_NAME}>YGPKB</option>
+                  </optgroup>
+                ) : null}
+                {categoryFilter === 'all' || categoryFilter === 'itbss' ? (
+                  <optgroup label="Perguruan Tinggi">
+                    <option value={ITBSS_NAME}>ITBSS</option>
+                  </optgroup>
+                ) : null}
+              </select>
+
+              {/* Status */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
+              >
+                <option value="all">Semua Status</option>
+                <option value="hadir">Bisa Hadir</option>
+                <option value="tidak_hadir">Berhalangan</option>
+              </select>
+
+              {/* Check-In */}
+              <select
+                value={checkInFilter}
+                onChange={(e) => setCheckInFilter(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
+              >
+                <option value="all">Semua Presensi</option>
+                <option value="checked_in">Sudah Check-In</option>
+                <option value="not_checked_in">Belum Check-In</option>
+              </select>
+            </div>
+          </div>
+
+          {/* MOBILE VIEW: Card List (< md) */}
+          <div className="block md:hidden space-y-3 mb-6">
+            {isLoading ? (
+              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400">
+                <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                <p className="text-xs font-semibold">Memuat data peserta...</p>
+              </div>
+            ) : filteredGuests.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400">
+                <p className="text-sm font-semibold text-slate-600">Tidak ada data peserta yang cocok dengan filter.</p>
+              </div>
+            ) : (
+              filteredGuests.map((guest) => {
+                const isAttending = guest.attendance_status === 'hadir';
                 return (
                   <div
                     key={guest.id}
-                    className="bg-white rounded-2xl border-2 border-amber-200 shadow-xs p-4 sm:p-5 space-y-3 relative"
+                    className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 space-y-3 text-left transition-all"
                   >
+                    {/* Header: Category Badge & Attendance Status */}
                     <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
-                      <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
-                        Menunggu Approval
+                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md inline-block ${
+                        guest.institution_category === 'yayasan'
+                          ? 'bg-purple-100 text-purple-700'
+                          : guest.institution_category === 'itbss'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        {guest.institution_category === 'yayasan'
+                          ? 'Yayasan YGPKB'
+                          : guest.institution_category === 'itbss'
+                          ? 'ITBSS'
+                          : 'Unit Sekolah'}
                       </span>
-                      <span className="text-[11px] text-slate-400">
-                        {new Date(guest.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}
-                      </span>
+
+                      {isAttending ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                          <CheckCircle2 className="w-3 h-3" /> Hadir
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
+                          <XCircle className="w-3 h-3" /> Berhalangan
+                        </span>
+                      )}
                     </div>
 
+                    {/* Unit & Peserta */}
                     <div>
-                      <h3 className="font-extrabold text-slate-900 text-base">
+                      <h3 className="font-extrabold text-slate-900 text-sm leading-snug">
                         {guest.university_name}
                       </h3>
                       <p className="text-xs font-bold text-slate-700 mt-1 flex items-center gap-1.5">
-                        <User className="w-3.5 h-3.5 text-slate-400" />
+                        <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span>{guest.pic_name}</span>
-                        {guest.pic_position && <span className="text-slate-400 font-normal">({guest.pic_position})</span>}
+                        {guest.pic_position && <span className="text-[11px] font-normal text-slate-400">({guest.pic_position})</span>}
                       </p>
-
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                         <a
                           href={`https://wa.me/${guest.pic_phone.replace(/\D/g, '')}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold active:scale-95 transition-all"
                         >
                           <Phone className="w-3 h-3 text-emerald-600" />
                           <span>{guest.pic_phone}</span>
                         </a>
-                        {guest.pic_email && (
-                          <span className="text-xs text-slate-400 flex items-center gap-1">
-                            <Mail className="w-3 h-3" />
-                            {guest.pic_email}
-                          </span>
-                        )}
                       </div>
                     </div>
 
-                    <div className="bg-amber-50/70 p-3 rounded-xl border border-amber-100 text-xs space-y-1 text-amber-900">
-                      <p className="font-bold text-[11px] text-amber-950">
-                        Status Kuota Kampus Ini:
-                      </p>
-                      <p className="text-[11px] leading-relaxed">
-                        Saat ini sudah ada <strong>{approvedFromSameUniv.length} perwakilan resmi</strong> terdaftar
-                        {approvedFromSameUniv.length > 0 && ` (${approvedFromSameUniv.map((g) => g.pic_name).join(', ')})`}.
-                      </p>
-                    </div>
-
+                    {/* Catatan jika ada */}
                     {guest.notes && (
                       <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs text-slate-600 italic">
-                        <span className="font-bold not-italic text-slate-400 text-[10px] block uppercase mb-0.5">Catatan Tamu:</span>
+                        <span className="font-bold not-italic text-slate-400 text-[10px] block uppercase mb-0.5">Catatan:</span>
                         "{guest.notes}"
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                    {/* Presensi Check-In Button */}
+                    {isAttending && (
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                        <div className="text-[11px]">
+                          <span className="text-slate-400">Presensi: </span>
+                          {guest.is_checked_in ? (
+                            <span className="font-bold text-teal-700">✓ Sudah Hadir</span>
+                          ) : (
+                            <span className="font-semibold text-slate-500">Belum Hadir</span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => onCheckInToggle(guest.id, !guest.is_checked_in)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${
+                            guest.is_checked_in
+                              ? 'bg-teal-50 text-teal-700 border-teal-300 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
+                              : 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 shadow-xs'
+                          }`}
+                        >
+                          {guest.is_checked_in ? 'Batalkan Presensi' : '+ Catat Hadir'}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Action Buttons Toolbar */}
+                    <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-slate-100">
                       <button
-                        onClick={() => onApproveGuest && onApproveGuest(guest.id, 'approved')}
-                        className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                        onClick={() => handleOpenQr(guest)}
+                        className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-200 text-slate-700 hover:text-emerald-700 text-[10px] font-bold active:scale-95 transition-all"
                       >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>✓ Setujui (Approve)</span>
+                        <QrIcon className="w-4 h-4 text-emerald-600" />
+                        <span>QR Tiket</span>
                       </button>
 
                       <button
-                        onClick={() => onApproveGuest && onApproveGuest(guest.id, 'rejected')}
-                        className="py-2.5 px-3 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                        onClick={() => setViewingGuest(guest)}
+                        className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-200 text-slate-700 hover:text-emerald-700 text-[10px] font-bold active:scale-95 transition-all"
                       >
-                        <XCircle className="w-4 h-4" />
-                        <span>✕ Tolak Permohonan</span>
+                        <Eye className="w-4 h-4 text-emerald-600" />
+                        <span>Detail</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleOpenEdit(guest)}
+                        className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 text-slate-700 hover:text-amber-700 text-[10px] font-bold active:scale-95 transition-all"
+                      >
+                        <Edit3 className="w-4 h-4 text-amber-600" />
+                        <span>Edit</span>
+                      </button>
+
+                      <button
+                        onClick={() => setDeletingGuest(guest)}
+                        className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-700 hover:text-rose-700 text-[10px] font-bold active:scale-95 transition-all"
+                      >
+                        <Trash2 className="w-4 h-4 text-rose-600" />
+                        <span>Hapus</span>
                       </button>
                     </div>
                   </div>
                 );
-              })}
-            </div>
-          )}
-        </div>
-      ) : (
-        <>
-          {/* KPI Cards Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5 mb-4 sm:mb-6">
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Undangan</p>
-          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
-            <span className="text-xl sm:text-2xl font-black text-slate-900">{kpis.total}</span>
-            <span className="text-[11px] sm:text-xs text-slate-400">Instansi</span>
+              })
+            )}
           </div>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">Univ, Sekolah, Yayasan</p>
-        </div>
 
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Bisa Hadir</p>
-          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
-            <span className="text-xl sm:text-2xl font-black text-emerald-600">{kpis.hadirCount}</span>
-            <span className="text-[11px] sm:text-xs text-slate-400">Lembaga</span>
-          </div>
-          <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-1.5 flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3 shrink-0" /> Terkonfirmasi
-          </p>
-        </div>
-
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs bg-linear-to-br from-indigo-50/50 to-white">
-          <p className="text-[10px] sm:text-[11px] font-bold text-indigo-800 uppercase tracking-wider">Pax Konsumsi</p>
-          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
-            <span className="text-xl sm:text-2xl font-black text-indigo-700">{kpis.totalPaxHadir}</span>
-            <span className="text-[11px] sm:text-xs text-indigo-500">Porsi</span>
-          </div>
-          <p className="text-[10px] sm:text-[11px] text-indigo-600 font-medium mt-1.5 flex items-center gap-1">
-            <Utensils className="w-3 h-3 shrink-0" /> Restoran Gajah Mada
-          </p>
-        </div>
-
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Di Restoran</p>
-          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
-            <span className="text-xl sm:text-2xl font-black text-teal-600">{kpis.checkedInCount}</span>
-            <span className="text-[11px] sm:text-xs text-slate-400">/ {kpis.hadirCount}</span>
-          </div>
-          <p className="text-[10px] sm:text-[11px] text-teal-600 font-medium mt-1.5 flex items-center gap-1">
-            <Clock className="w-3 h-3 shrink-0" /> Sudah Check-In
-          </p>
-        </div>
-
-        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs col-span-2 sm:col-span-1">
-          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Berhalangan</p>
-          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
-            <span className="text-xl sm:text-2xl font-black text-rose-500">{kpis.tidakHadirCount}</span>
-            <span className="text-[11px] sm:text-xs text-slate-400">Instansi</span>
-          </div>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">Tidak dapat hadir</p>
-        </div>
-      </div>
-
-      {/* Filter and Search Bar */}
-      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 sm:gap-3">
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Cari kampus, PIC, no HP..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-indigo-500 outline-none"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 w-full md:w-auto">
-          {/* Category */}
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
-          >
-            <option value="all">Semua Kategori Asal</option>
-            <option value="universitas">Universitas Mitra</option>
-            <option value="guru">Guru Sekolah</option>
-            <option value="panitia">Panitia Sekolah</option>
-            <option value="yayasan">YGPKB</option>
-          </select>
-
-          {/* Status */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
-          >
-            <option value="all">Semua Status</option>
-            <option value="hadir">Bisa Hadir</option>
-            <option value="tidak_hadir">Berhalangan</option>
-          </select>
-
-          {/* Check-In */}
-          <select
-            value={checkInFilter}
-            onChange={(e) => setCheckInFilter(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
-          >
-            <option value="all">Semua Presensi</option>
-            <option value="checked_in">Sudah Check-In</option>
-            <option value="not_checked_in">Belum Check-In</option>
-          </select>
-
-          {/* Approval Status */}
-          <select
-            value={approvalFilter}
-            onChange={(e) => setApprovalFilter(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
-          >
-            <option value="all">Semua Persetujuan</option>
-            <option value="approved">Disetujui (Approved)</option>
-            <option value="pending">Menunggu (Pending)</option>
-            <option value="rejected">Ditolak (Rejected)</option>
-          </select>
-        </div>
-      </div>
-
-      {/* MOBILE VIEW: Card List for Mobile Screens (< md) */}
-      <div className="block md:hidden space-y-3 mb-6">
-        {isLoading ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400">
-            <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-            <p className="text-xs font-semibold">Memuat data delegasi...</p>
-          </div>
-        ) : filteredGuests.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400">
-            <p className="text-sm font-semibold text-slate-600">Tidak ada data tamu yang cocok dengan filter.</p>
-          </div>
-        ) : (
-          filteredGuests.map((guest) => {
-            const isAttending = guest.attendance_status === 'hadir';
-            return (
-              <div
-                key={guest.id}
-                className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 space-y-3 text-left transition-all"
-              >
-                {/* Header: Category Badge & Attendance Status */}
-                <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
-                  <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md inline-block ${
-                    guest.institution_category === 'yayasan'
-                      ? 'bg-purple-100 text-purple-700'
-                      : guest.institution_category === 'sekolah'
-                      ? (guest.university_name.toLowerCase().includes('guru') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')
-                      : 'bg-indigo-100 text-indigo-700'
-                  }`}>
-                    {guest.institution_category === 'yayasan'
-                      ? 'YGPKB'
-                      : guest.institution_category === 'sekolah'
-                      ? (guest.university_name.toLowerCase().includes('guru') ? 'Guru Sekolah' : 'Panitia Sekolah')
-                      : 'Universitas Mitra'}
-                  </span>
-
-                  {guest.approval_status === 'pending' ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-300 shrink-0">
-                      <Clock className="w-3 h-3 text-amber-500 animate-pulse" /> Pending Approval
-                    </span>
-                  ) : guest.approval_status === 'rejected' ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-300 shrink-0">
-                      <XCircle className="w-3 h-3 text-rose-500" /> Ditolak
-                    </span>
-                  ) : isAttending ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                      <CheckCircle2 className="w-3 h-3" /> Hadir ({guest.attendee_count} pax)
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
-                      <XCircle className="w-3 h-3" /> Berhalangan
-                    </span>
-                  )}
-                </div>
-
-                {/* Lembaga & PIC */}
-                <div>
-                  <h3 className="font-extrabold text-slate-900 text-sm leading-snug">
-                    {guest.university_name}
-                  </h3>
-                  <p className="text-xs font-bold text-slate-700 mt-1 flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>{guest.pic_name}</span>
-                    {guest.pic_position && <span className="text-[11px] font-normal text-slate-400">({guest.pic_position})</span>}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <a
-                      href={`https://wa.me/${guest.pic_phone.replace(/\D/g, '')}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold active:scale-95 transition-all"
-                    >
-                      <Phone className="w-3 h-3 text-emerald-600" />
-                      <span>{guest.pic_phone}</span>
-                    </a>
-                    {guest.pic_email && (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 truncate max-w-[170px]">
-                        <Mail className="w-3 h-3 text-slate-400 shrink-0" />
-                        {guest.pic_email}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Catatan jika ada */}
-                {guest.notes && (
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs text-slate-600 italic">
-                    <span className="font-bold not-italic text-slate-400 text-[10px] block uppercase mb-0.5">Catatan:</span>
-                    "{guest.notes}"
-                  </div>
-                )}
-
-                {/* Check-In Bar or Pending Approval Bar */}
-                {guest.approval_status === 'pending' ? (
-                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-amber-100 bg-amber-50/70 -mx-4 -mb-1 px-4 py-2.5 rounded-b-2xl">
-                    <div className="text-[11px] font-bold text-amber-800 flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                      <span>Perlu Persetujuan</span>
-                    </div>
-                    {onApproveGuest && (
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => onApproveGuest(guest.id, 'rejected')}
-                          className="px-2.5 py-1 text-xs font-bold text-rose-600 bg-white border border-rose-200 rounded-lg hover:bg-rose-50 active:scale-95 transition-all shadow-xs"
-                        >
-                          Tolak
-                        </button>
-                        <button
-                          onClick={() => onApproveGuest(guest.id, 'approved')}
-                          className="px-2.5 py-1 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 active:scale-95 transition-all shadow-xs"
-                        >
-                          Setujui
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : guest.approval_status === 'rejected' ? (
-                  <div className="pt-2 border-t border-slate-100 text-[11px] text-rose-600 font-semibold italic">
-                    Pendaftaran ditolak karena melebihi kuota 2 delegasi.
-                  </div>
-                ) : isAttending && (
-                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
-                    <div className="text-[11px]">
-                      <span className="text-slate-400">Presensi: </span>
-                      {guest.is_checked_in ? (
-                        <span className="font-bold text-teal-700">✓ Sudah Tiba</span>
-                      ) : (
-                        <span className="font-semibold text-slate-500">Belum Tiba</span>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => onCheckInToggle(guest.id, !guest.is_checked_in)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${
-                        guest.is_checked_in
-                          ? 'bg-teal-50 text-teal-700 border-teal-300 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
-                          : 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 shadow-xs'
-                      }`}
-                    >
-                      {guest.is_checked_in ? 'Batalkan Tiba' : '+ Catat Kehadiran'}
-                    </button>
-                  </div>
-                )}
-
-                {/* Action Buttons Toolbar */}
-                <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-slate-100">
-                  <button
-                    onClick={() => handleOpenQr(guest)}
-                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-700 hover:text-indigo-600 text-[10px] font-bold active:scale-95 transition-all"
-                  >
-                    <QrIcon className="w-4 h-4 text-indigo-600" />
-                    <span>QR Tiket</span>
-                  </button>
-
-                  <button
-                    onClick={() => setViewingGuest(guest)}
-                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-700 hover:text-indigo-600 text-[10px] font-bold active:scale-95 transition-all"
-                  >
-                    <Eye className="w-4 h-4 text-indigo-600" />
-                    <span>Detail</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleOpenEdit(guest)}
-                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 text-slate-700 hover:text-amber-700 text-[10px] font-bold active:scale-95 transition-all"
-                  >
-                    <Edit3 className="w-4 h-4 text-amber-600" />
-                    <span>Edit</span>
-                  </button>
-
-                  <button
-                    onClick={() => setDeletingGuest(guest)}
-                    className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-700 hover:text-rose-700 text-[10px] font-bold active:scale-95 transition-all"
-                  >
-                    <Trash2 className="w-4 h-4 text-rose-600" />
-                    <span>Hapus</span>
-                  </button>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* DESKTOP VIEW: Full Data Table (Active on >= md) */}
-      <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs sm:text-sm">
-            <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 text-[11px] uppercase tracking-wider">
-              <tr>
-                <th className="px-4 py-3.5">Kategori & Lembaga</th>
-                <th className="px-4 py-3.5">PIC & Kontak</th>
-                <th className="px-4 py-3.5 text-center">Kehadiran</th>
-                <th className="px-4 py-3.5 text-center">Pax</th>
-                <th className="px-4 py-3.5">Catatan</th>
-                <th className="px-4 py-3.5 text-center">Presensi</th>
-                <th className="px-4 py-3.5 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={7} className="text-center py-12 text-slate-400">
-                    <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                    Memuat data...
-                  </td>
-                </tr>
-              ) : filteredGuests.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="text-center py-12 text-slate-400">
-                    Tidak ada data tamu yang cocok dengan filter.
-                  </td>
-                </tr>
-              ) : (
-                filteredGuests.map((guest) => {
-                  return (
-                    <tr key={guest.id} className="hover:bg-slate-50/70 transition-colors">
-                      {/* Lembaga */}
-                      <td className="px-4 py-3.5">
-                        <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-sm inline-block mb-1 ${
-                          guest.institution_category === 'yayasan'
-                            ? 'bg-purple-100 text-purple-700'
-                            : guest.institution_category === 'sekolah'
-                            ? (guest.university_name.toLowerCase().includes('guru') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')
-                            : 'bg-indigo-100 text-indigo-700'
-                        }`}>
-                          {guest.institution_category === 'yayasan'
-                            ? 'YGPKB'
-                            : guest.institution_category === 'sekolah'
-                            ? (guest.university_name.toLowerCase().includes('guru') ? 'Guru Sekolah' : 'Panitia Sekolah')
-                            : 'Universitas'}
-                        </span>
-                        <p className="font-bold text-slate-900">{guest.university_name}</p>
-                      </td>
-
-                      {/* PIC */}
-                      <td className="px-4 py-3.5">
-                        <p className="font-semibold text-slate-800">{guest.pic_name}</p>
-                        <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                          <a
-                            href={`https://wa.me/${guest.pic_phone.replace(/\D/g, '')}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-indigo-600 hover:underline flex items-center gap-1 font-medium"
-                          >
-                            <Phone className="w-3 h-3" />
-                            {guest.pic_phone}
-                          </a>
-                        </div>
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                        {guest.approval_status === 'pending' ? (
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-300 shadow-2xs">
-                              <Clock className="w-3 h-3 text-amber-500 animate-pulse" /> Pending
-                            </span>
-                            {onApproveGuest && (
-                              <div className="flex items-center gap-1 mt-0.5">
-                                <button
-                                  onClick={() => onApproveGuest(guest.id, 'approved')}
-                                  className="px-2 py-0.5 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded shadow-2xs active:scale-95 transition-all"
-                                  title="Setujui delegasi tambahan ini"
-                                >
-                                  ✓ Setujui
-                                </button>
-                                <button
-                                  onClick={() => onApproveGuest(guest.id, 'rejected')}
-                                  className="px-2 py-0.5 text-[10px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded border border-rose-200 active:scale-95 transition-all"
-                                  title="Tolak delegasi tambahan ini"
-                                >
-                                  ✕ Tolak
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ) : guest.approval_status === 'rejected' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                            <XCircle className="w-3 h-3 text-rose-500" /> Ditolak
-                          </span>
-                        ) : guest.attendance_status === 'hadir' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <CheckCircle2 className="w-3 h-3" /> Hadir
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                            <XCircle className="w-3 h-3" /> Berhalangan
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Pax */}
-                      <td className="px-4 py-3.5 text-center font-bold text-slate-700">
-                        {guest.attendance_status === 'tidak_hadir' ? '-' : `${guest.attendee_count} pax`}
-                      </td>
-
-                      {/* Catatan */}
-                      <td className="px-4 py-3.5 max-w-xs">
-                        {guest.notes ? (
-                          <p className="text-xs text-slate-600 line-clamp-2">{guest.notes}</p>
-                        ) : (
-                          <span className="text-xs text-slate-400">-</span>
-                        )}
-                      </td>
-
-                      {/* Check-In */}
-                      <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                        {guest.approval_status === 'pending' ? (
-                          <span className="text-xs text-amber-600 font-semibold italic">Perlu Approval</span>
-                        ) : guest.approval_status === 'rejected' ? (
-                          <span className="text-xs text-rose-400 font-semibold italic">Ditolak</span>
-                        ) : guest.attendance_status === 'tidak_hadir' ? (
-                          <span className="text-xs text-slate-400 italic">-</span>
-                        ) : (
-                          <button
-                            onClick={() => onCheckInToggle(guest.id, !guest.is_checked_in)}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
-                              guest.is_checked_in
-                                ? 'bg-teal-50 text-teal-700 border-teal-300 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300'
-                                : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-teal-600 hover:text-white hover:border-teal-600'
-                            }`}
-                          >
-                            {guest.is_checked_in ? '✓ Sudah Tiba' : '+ Check-In'}
-                          </button>
-                        )}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => handleOpenQr(guest)}
-                            title="Lihat QR Code Tamu"
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-                          >
-                            <QrIcon className="w-4 h-4" />
-                          </button>
-
-                          <button
-                            onClick={() => setViewingGuest(guest)}
-                            title="Lihat Detail"
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          
-                          <button
-                            onClick={() => handleOpenEdit(guest)}
-                            title="Edit Data"
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-
-                          <button
-                            onClick={() => setDeletingGuest(guest)}
-                            title="Hapus Data"
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+          {/* DESKTOP VIEW: Full Data Table (>= md) */}
+          <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 text-[11px] uppercase tracking-wider">
+                  <tr>
+                    <th className="px-4 py-3.5">Kategori & Unit</th>
+                    <th className="px-4 py-3.5">Nama & Kontak</th>
+                    <th className="px-4 py-3.5 text-center">Status</th>
+                    <th className="px-4 py-3.5 text-center">Pax</th>
+                    <th className="px-4 py-3.5">Catatan</th>
+                    <th className="px-4 py-3.5 text-center">Presensi</th>
+                    <th className="px-4 py-3.5 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-12 text-slate-400">
+                        <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                        Memuat data peserta...
                       </td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      </>
+                  ) : filteredGuests.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-12 text-slate-400">
+                        Tidak ada data peserta yang cocok dengan filter.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredGuests.map((guest) => {
+                      return (
+                        <tr key={guest.id} className="hover:bg-slate-50/70 transition-colors">
+                          {/* Unit */}
+                          <td className="px-4 py-3.5">
+                            <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-sm inline-block mb-1 ${
+                              guest.institution_category === 'yayasan'
+                                ? 'bg-purple-100 text-purple-700'
+                                : guest.institution_category === 'itbss'
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-emerald-100 text-emerald-800'
+                            }`}>
+                              {guest.institution_category === 'yayasan'
+                                ? 'Yayasan'
+                                : guest.institution_category === 'itbss'
+                                ? 'ITBSS'
+                                : 'Unit Sekolah'}
+                            </span>
+                            <p className="font-bold text-slate-900">{guest.university_name}</p>
+                          </td>
+
+                          {/* PIC */}
+                          <td className="px-4 py-3.5">
+                            <p className="font-semibold text-slate-800">{guest.pic_name}</p>
+                            {guest.pic_position && (
+                              <p className="text-[11px] text-slate-400">{guest.pic_position}</p>
+                            )}
+                            <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                              <a
+                                href={`https://wa.me/${guest.pic_phone.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-emerald-700 hover:underline flex items-center gap-1 font-medium"
+                              >
+                                <Phone className="w-3 h-3 text-emerald-600" />
+                                {guest.pic_phone}
+                              </a>
+                            </div>
+                          </td>
+
+                          {/* Status */}
+                          <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                            {guest.attendance_status === 'hadir' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <CheckCircle2 className="w-3 h-3" /> Hadir
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                <XCircle className="w-3 h-3" /> Berhalangan
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Pax */}
+                          <td className="px-4 py-3.5 text-center font-bold text-slate-700">
+                            {guest.attendance_status === 'tidak_hadir' ? '-' : `${guest.attendee_count} pax`}
+                          </td>
+
+                          {/* Catatan */}
+                          <td className="px-4 py-3.5 max-w-xs">
+                            {guest.notes ? (
+                              <p className="text-xs text-slate-600 line-clamp-2">{guest.notes}</p>
+                            ) : (
+                              <span className="text-xs text-slate-400">-</span>
+                            )}
+                          </td>
+
+                          {/* Presensi Check-In */}
+                          <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                            {guest.attendance_status === 'tidak_hadir' ? (
+                              <span className="text-xs text-slate-400 italic">-</span>
+                            ) : (
+                              <button
+                                onClick={() => onCheckInToggle(guest.id, !guest.is_checked_in)}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                                  guest.is_checked_in
+                                    ? 'bg-teal-50 text-teal-700 border-teal-300 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300'
+                                    : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-emerald-600 hover:text-white hover:border-emerald-600'
+                                }`}
+                              >
+                                {guest.is_checked_in ? '✓ Sudah Hadir' : '+ Catat Hadir'}
+                              </button>
+                            )}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => handleOpenQr(guest)}
+                                title="Lihat QR Code"
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+                              >
+                                <QrIcon className="w-4 h-4" />
+                              </button>
+
+                              <button
+                                onClick={() => setViewingGuest(guest)}
+                                title="Lihat Detail"
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              
+                              <button
+                                onClick={() => handleOpenEdit(guest)}
+                                title="Edit Data"
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+
+                              <button
+                                onClick={() => setDeletingGuest(guest)}
+                                title="Hapus Data"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       {/* MODAL: QR CODE */}
@@ -1107,8 +1133,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <X className="w-5 h-5" />
             </button>
 
-            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700">
-              QR Code Delegasi
+            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800">
+              E-Tiket Presensi Natal
             </span>
             <h3 className="font-bold text-slate-900 text-base mt-2">{qrModalGuest.university_name}</h3>
             <p className="text-xs text-slate-500 mb-4">{qrModalGuest.pic_name}</p>
@@ -1118,12 +1144,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             <p className="text-[11px] text-slate-400 mb-4">
-              Tamu dapat menunjukkan QR code ini kepada panitia resepsionis Restoran Gajah Mada.
+              Tunjukkan QR Code ini ke petugas meja resepsionis untuk presensi otomatis 1 detik.
             </p>
 
             <button
               onClick={() => setQrModalGuest(null)}
-              className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors"
+              className="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-colors"
             >
               Tutup
             </button>
@@ -1146,15 +1172,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
 
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
                 {editingGuest ? <Edit3 className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
               </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-900">
-                  {editingGuest ? 'Edit Data Delegasi' : 'Tambah Delegasi Baru (Manual)'}
+                  {editingGuest ? 'Edit Data Peserta' : 'Tambah Peserta Baru (Manual)'}
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Restoran Gajah Mada Pontianak • Makrab Career Day 2026
+                  Perayaan Natal Bersama • Unit Sekolah, YGPKB & ITBSS
                 </p>
               </div>
             </div>
@@ -1168,65 +1194,77 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <form onSubmit={handleSaveForm} className="space-y-4 text-xs sm:text-sm">
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Kategori Instansi</label>
-                <select
-                  value={adminKey}
-                  onChange={(e) => handleAdminCategoryChange(e.target.value as 'universitas' | 'guru' | 'panitia' | 'yayasan')}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 outline-none bg-white font-semibold"
-                >
-                  <option value="universitas">Universitas Mitra</option>
-                  <option value="guru">Guru Sekolah</option>
-                  <option value="panitia">Panitia Sekolah</option>
-                  <option value="yayasan">YGPKB</option>
-                </select>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleAdminCategoryChange('sekolah')}
+                    className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-center ${
+                      adminKey === 'sekolah'
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    🏫 Unit Sekolah (12)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAdminCategoryChange('yayasan')}
+                    className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-center ${
+                      adminKey === 'yayasan'
+                        ? 'border-purple-600 bg-purple-50 text-purple-800'
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    ⛪ Yayasan YGPKB
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAdminCategoryChange('itbss')}
+                    className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-center ${
+                      adminKey === 'itbss'
+                        ? 'border-amber-600 bg-amber-50 text-amber-800'
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    🎓 ITBSS
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label className="block font-bold text-slate-700 mb-1">
-                  {adminKey === 'universitas'
-                    ? 'Nama Universitas / Lembaga *'
-                    : adminKey === 'guru'
-                    ? 'Keterangan / Bidang Guru *'
-                    : adminKey === 'panitia'
-                    ? 'Divisi / Unit Panitia Sekolah *'
-                    : 'Nama Lembaga / YGPKB *'}
+                  {adminKey === 'sekolah' ? 'Pilih Unit Sekolah *' : 'Nama Lembaga *'}
                 </label>
-                {adminKey === 'universitas' ? (
-                  <UniversityCombobox
+                {adminKey === 'sekolah' ? (
+                  <select
                     value={formData.university_name}
-                    onChange={(val) => {
-                      setAdminLastUniv(val);
-                      setFormData((prev) => ({ ...prev, university_name: val }));
-                    }}
-                    placeholder="Ketik untuk mencari atau pilih universitas..."
-                  />
+                    onChange={(e) => setFormData({ ...formData, university_name: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 outline-none font-bold text-slate-800 bg-white"
+                  >
+                    {SCHOOL_UNITS.map((u) => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
                 ) : (
                   <input
                     type="text"
                     value={formData.university_name}
-                    onChange={(e) => setFormData({ ...formData, university_name: e.target.value })}
-                    placeholder={
-                      adminKey === 'guru'
-                        ? 'Guru Sekolah / Guru BK / Guru Mata Pelajaran'
-                        : adminKey === 'panitia'
-                        ? 'Panitia Career Day Sekolah'
-                        : 'Yayasan Gereja Protestan Kampung Bali'
-                    }
-                    required
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
+                    readOnly
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-100 font-bold text-slate-700 outline-none"
                   />
                 )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Nama PIC *</label>
+                  <label className="block font-bold text-slate-700 mb-1">Nama Peserta *</label>
                   <input
                     type="text"
                     value={formData.pic_name}
                     onChange={(e) => setFormData({ ...formData, pic_name: e.target.value })}
                     placeholder="Nama Lengkap"
                     required
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 outline-none"
                   />
                 </div>
                 <div>
@@ -1237,20 +1275,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     onChange={(e) => setFormData({ ...formData, pic_phone: e.target.value })}
                     placeholder="081234567890"
                     required
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 outline-none"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Email</label>
+                  <label className="block font-bold text-slate-700 mb-1">Jabatan / Peran</label>
                   <input
-                    type="email"
-                    value={formData.pic_email}
-                    onChange={(e) => setFormData({ ...formData, pic_email: e.target.value })}
-                    placeholder="kontak@univ.ac.id"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
+                    type="text"
+                    value={formData.pic_position}
+                    onChange={(e) => setFormData({ ...formData, pic_position: e.target.value })}
+                    placeholder="Contoh: Guru, Staf, Kepala Sekolah"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 outline-none"
                   />
                 </div>
                 <div>
@@ -1266,32 +1304,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Jumlah Pax Hadir</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="15"
-                    value={formData.attendee_count}
-                    onChange={(e) =>
-                      setFormData({ ...formData, attendee_count: Math.max(1, parseInt(e.target.value) || 1) })
-                    }
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Rekan Pendamping</label>
-                  <input
-                    type="text"
-                    value={formData.additional_attendees}
-                    onChange={(e) => setFormData({ ...formData, additional_attendees: e.target.value })}
-                    placeholder="Nama staf/rekan lain"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
-                  />
-                </div>
-              </div>
-
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Catatan</label>
                 <textarea
@@ -1299,7 +1311,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Catatan khusus panitia"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 outline-none"
                 ></textarea>
               </div>
 
@@ -1317,7 +1329,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md shadow-indigo-200 disabled:bg-indigo-400"
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md shadow-emerald-200 disabled:bg-emerald-400"
                 >
                   {isProcessing ? 'Menyimpan...' : editingGuest ? 'Perbarui Data' : 'Simpan Data'}
                 </button>
@@ -1338,8 +1350,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <X className="w-5 h-5" />
             </button>
 
-            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full">
-              Detail Delegasi
+            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full">
+              Detail Peserta
             </span>
             <h2 className="text-xl font-bold text-slate-900 mt-2">{viewingGuest.university_name}</h2>
 
@@ -1347,7 +1359,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <p className="text-slate-400 text-[10px] uppercase font-bold">Kategori</p>
-                  <p className="font-semibold text-slate-800 capitalize">{viewingGuest.institution_category}</p>
+                  <p className="font-semibold text-slate-800 capitalize">
+                    {viewingGuest.institution_category === 'yayasan' ? 'Yayasan YGPKB' : viewingGuest.institution_category === 'itbss' ? 'ITBSS' : 'Unit Sekolah'}
+                  </p>
                 </div>
                 <div>
                   <p className="text-slate-400 text-[10px] uppercase font-bold">Status Kehadiran</p>
@@ -1355,86 +1369,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              <div>
-                <p className="text-slate-400 text-[10px] uppercase font-bold mb-1">Status Persetujuan Kuota</p>
-                {viewingGuest.approval_status === 'pending' ? (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                    <div>
-                      <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-800">
-                        <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse" /> Pending Approval (Kuota &ge; 2)
-                      </span>
-                      <p className="text-[11px] text-amber-700 mt-0.5">Pendaftaran ini melebihi kuota 2 perwakilan universitas.</p>
-                    </div>
-                    {onApproveGuest && (
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            await onApproveGuest(viewingGuest.id, 'rejected');
-                            setViewingGuest((prev) => prev ? { ...prev, approval_status: 'rejected' } : null);
-                          }}
-                          className="px-3 py-1.5 rounded-lg bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition-all shadow-xs"
-                        >
-                          Tolak
-                        </button>
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            await onApproveGuest(viewingGuest.id, 'approved');
-                            setViewingGuest((prev) => prev ? { ...prev, approval_status: 'approved' } : null);
-                          }}
-                          className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold transition-all shadow-xs"
-                        >
-                          Setujui
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : viewingGuest.approval_status === 'rejected' ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                    <XCircle className="w-3.5 h-3.5 text-rose-500" /> Ditolak oleh Panitia
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Disetujui (Approved)
-                  </span>
-                )}
-              </div>
-
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <p className="text-slate-400 text-[10px] uppercase font-bold">Nama PIC</p>
+                  <p className="text-slate-400 text-[10px] uppercase font-bold">Nama Peserta</p>
                   <p className="font-semibold text-slate-800">{viewingGuest.pic_name}</p>
                 </div>
                 <div>
                   <p className="text-slate-400 text-[10px] uppercase font-bold">No. WhatsApp</p>
-                  <p className="font-semibold text-indigo-600">{viewingGuest.pic_phone}</p>
+                  <p className="font-semibold text-emerald-700">{viewingGuest.pic_phone}</p>
                 </div>
               </div>
 
-              {viewingGuest.attendance_status === 'hadir' && (
+              {viewingGuest.pic_position && (
                 <div>
-                  <p className="text-slate-400 text-[10px] uppercase font-bold">Pax Konsumsi</p>
-                  <p className="font-semibold text-slate-800">{viewingGuest.attendee_count} Orang (Restoran Gajah Mada)</p>
+                  <p className="text-slate-400 text-[10px] uppercase font-bold">Jabatan / Peran</p>
+                  <p className="font-semibold text-slate-800">{viewingGuest.pic_position}</p>
                 </div>
               )}
 
               {viewingGuest.notes && (
                 <div>
-                  <p className="text-slate-400 text-[10px] uppercase font-bold">Catatan / Pesan</p>
+                  <p className="text-slate-400 text-[10px] uppercase font-bold">Catatan</p>
                   <p className="bg-slate-50 p-2 rounded-xl text-slate-700 mt-1">{viewingGuest.notes}</p>
                 </div>
               )}
 
               <div>
-                <p className="text-slate-400 text-[10px] uppercase font-bold">Status Presensi (Restoran Gajah Mada)</p>
+                <p className="text-slate-400 text-[10px] uppercase font-bold">Status Presensi</p>
                 <p className="mt-0.5">
                   {viewingGuest.is_checked_in ? (
                     <span className="text-emerald-700 font-bold">
-                      ✓ Sudah Check-In ({viewingGuest.checked_in_at ? new Date(viewingGuest.checked_in_at).toLocaleTimeString('id-ID') : ''} WIB)
+                      ✓ Sudah Presensi ({viewingGuest.checked_in_at ? new Date(viewingGuest.checked_in_at).toLocaleTimeString('id-ID') : ''} WIB)
                     </span>
                   ) : (
-                    <span className="text-slate-400 italic">Belum tiba di lokasi</span>
+                    <span className="text-slate-400 italic">Belum hadir di lokasi</span>
                   )}
                 </p>
               </div>
@@ -1460,9 +1428,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <AlertTriangle className="w-6 h-6" />
             </div>
             
-            <h3 className="text-lg font-bold text-slate-900">Hapus Data Tamu?</h3>
+            <h3 className="text-lg font-bold text-slate-900">Hapus Data Peserta?</h3>
             <p className="text-xs text-slate-500 mt-1 mb-5">
-              Apakah Anda yakin ingin menghapus data delegasi <strong className="text-slate-800">{deletingGuest.university_name}</strong>?
+              Apakah Anda yakin ingin menghapus data peserta <strong className="text-slate-800">{deletingGuest.pic_name}</strong> dari <strong className="text-slate-800">{deletingGuest.university_name}</strong>?
             </p>
 
             <div className="flex gap-3">

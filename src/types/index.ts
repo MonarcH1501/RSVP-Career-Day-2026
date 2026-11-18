@@ -1,21 +1,49 @@
 export type AttendanceStatus = 'hadir' | 'tidak_hadir';
 export type ApprovalStatus = 'approved' | 'pending' | 'rejected';
 
-export type InstitutionCategory = 'universitas' | 'sekolah' | 'yayasan';
+// Kategori Peserta: Unit Sekolah, Yayasan YGPKB, atau Bidang ITBSS
+export type InstitutionCategory = 'sekolah' | 'yayasan' | 'itbss' | 'universitas';
+
+// 12 Unit Sekolah resmi
+export const SCHOOL_UNITS = [
+  'TK 1',
+  'TK 2',
+  'SD 1',
+  'SD 2',
+  'SMP 1',
+  'SMP 2',
+  'SMK 1',
+  'SMK 2',
+  'SMA Reg',
+  'SD IBC',
+  'SMP IBC',
+  'SMA IBC',
+] as const;
+
+export type SchoolUnit = typeof SCHOOL_UNITS[number];
+
+export const YAYASAN_NAME = 'Yayasan Gereja Protestan Kampung Bali (YGPKB)';
+export const ITBSS_NAME = 'Institut Teknologi dan Bisnis Sabda Setia (ITBSS)';
+
+export const ALL_INSTITUTION_UNITS = [
+  ...SCHOOL_UNITS,
+  YAYASAN_NAME,
+  ITBSS_NAME,
+] as const;
 
 export interface RsvpGuest {
   id: string;
   created_at: string;
   updated_at: string;
   institution_category: InstitutionCategory;
-  university_name: string; // Nama Universitas / Sekolah / Yayasan
-  pic_name: string;        // Nama Tamu / Peserta Individu
-  pic_position?: string;   // Jabatan di Kampus / Lembaga
+  university_name: string; // Nama Unit Sekolah / YGPKB / ITBSS
+  pic_name: string;        // Nama Guru / Staf / Tamu
+  pic_position?: string;   // Jabatan / Peran (Guru, Tendik, Staf, Pengurus, Dosen, dll)
   pic_phone: string;       // No WhatsApp Pribadi
   pic_email?: string;      // Email
   attendance_status: AttendanceStatus;
-  approval_status?: ApprovalStatus; // 'approved' (default), 'pending', 'rejected'
-  attendee_count: number;  // Selalu 1 per orang
+  approval_status?: ApprovalStatus; // 'approved' (default)
+  attendee_count: number;  // 1 orang per barcode
   additional_attendees?: string;
   dietary_requirements?: string;
   presentation_topic?: string;

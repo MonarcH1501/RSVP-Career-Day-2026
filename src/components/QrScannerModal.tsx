@@ -166,20 +166,20 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
       setScanResult({
         status: 'not_found',
         rawText: rawCode,
-        message: 'QR Code tidak dikenali atau bukan tiket sah Career Day 2026.',
+        message: 'QR Code tidak dikenali atau bukan tiket sah Perayaan Natal YGPKB.',
         timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       });
       setIsProcessing(false);
       return;
     }
 
-    // CEK JIKA STATUS DITOLAK (REJECTED / TIDAK DISETUJUI PANITIA)
+    // CEK JIKA STATUS DITOLAK (REJECTED)
     if (foundGuest.approval_status === 'rejected') {
       playFeedbackSound('error');
       setScanResult({
         status: 'error',
         guest: foundGuest,
-        message: `⛔ PRESENSI DITOLAK: Pendaftaran perwakilan dari ${foundGuest.university_name} (${foundGuest.pic_name}) telah DITOLAK oleh panitia karena melebihi batas kuota 2 orang.`,
+        message: `⛔ PRESENSI DITOLAK: Pendaftaran dari ${foundGuest.university_name} (${foundGuest.pic_name}) telah ditolak panitia.`,
         timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       });
       setIsProcessing(false);
@@ -192,7 +192,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
       setScanResult({
         status: 'warning',
         guest: foundGuest,
-        message: `⏳ PRESENSI TERTUNDA: Pendaftaran tamu ini masih berstatus PENDING (Menunggu Persetujuan Kuota). Silakan panitia menyetujui di tab Persetujuan Kuota terlebih dahulu.`,
+        message: `⏳ PRESENSI TERTUNDA: Pendaftaran peserta ini masih berstatus PENDING. Silakan panitia menyetujui di portal admin terlebih dahulu.`,
         timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       });
       setIsProcessing(false);
@@ -205,7 +205,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
       setScanResult({
         status: 'warning',
         guest: foundGuest,
-        message: `Tamu ini terdaftar dalam status "Berhalangan Hadir".`,
+        message: `Peserta ini terdaftar dalam status "Berhalangan Hadir".`,
         timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       });
       setIsProcessing(false);
@@ -218,7 +218,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
       setScanResult({
         status: 'already_checked_in',
         guest: foundGuest,
-        message: `Tamu ini sudah pernah melakukan Check-In sebelumnya.`,
+        message: `Peserta ini sudah pernah melakukan Presensi sebelumnya.`,
         timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       });
       setIsProcessing(false);
@@ -246,7 +246,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
           checked_in_at: new Date().toISOString(),
           checked_in_by: receptionistStaff,
         },
-        message: `Presensi berhasil dicatat otomatis! Selamat datang di Restoran Gajah Mada.`,
+        message: `Presensi berhasil dicatat otomatis! Selamat datang di Perayaan Natal YGPKB.`,
         timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       });
     } catch (err: unknown) {

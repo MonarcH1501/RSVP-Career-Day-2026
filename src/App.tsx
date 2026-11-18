@@ -225,16 +225,16 @@ export function App() {
       <footer className="mt-auto border-t border-slate-200 bg-white py-5 px-3 sm:px-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 text-center sm:text-left">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-white p-0.5 border border-slate-200/80 shadow-2xs flex items-center justify-center shrink-0">
-              <img src={logoIcon} alt="Logo Career Day" className="w-full h-full object-contain" />
+            <div className="w-6 h-6 rounded-md bg-emerald-700 p-0.5 border border-emerald-800 shadow-2xs flex items-center justify-center shrink-0">
+              <img src={logoIcon} alt="Logo YGPKB" className="w-full h-full object-contain brightness-0 invert" />
             </div>
-            <span className="font-bold text-slate-800">Career Day 2026</span>
+            <span className="font-bold text-slate-800">Perayaan Natal Bersama</span>
             <span className="text-slate-300">•</span>
-            <span className="text-slate-600">Restoran Gajah Mada</span>
+            <span className="text-emerald-700 font-semibold">YGPKB • Unit Sekolah • ITBSS</span>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-slate-400 text-[11px]">
-            <span>Univ Mitra • Guru • Panitia • YGPKB</span>
+            <span>12 Unit Sekolah • Yayasan Gereja Protestan Kampung Bali • ITBSS</span>
           </div>
         </div>
       </footer>

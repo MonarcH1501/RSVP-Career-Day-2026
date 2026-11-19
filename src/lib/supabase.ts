@@ -30,7 +30,7 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured()
 // Mock data awal kosong
 const INITIAL_DEMO_DATA: RsvpGuest[] = [];
 
-const LOCAL_STORAGE_KEY = 'rsvp_career_day_guests_v3';
+const LOCAL_STORAGE_KEY = 'absensi_natal_ygpkb_v1';
 
 const getLocalGuests = (): RsvpGuest[] => {
   try {
@@ -111,6 +111,8 @@ export const fetchGuests = async (): Promise<{
         detectedDatabase = 'supabase';
         const sanitized = (data as any[]).map(sanitizeGuest);
         return { data: sanitized, error: null, databaseType: 'supabase' };
+      } else if (error) {
+        console.warn('Supabase fetch error (falling back to local):', error.message);
       }
     } catch (_supabaseErr) {}
   }

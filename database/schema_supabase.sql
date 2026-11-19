@@ -30,7 +30,12 @@ CREATE TABLE IF NOT EXISTS public.rsvp_guests (
     checked_in_by TEXT DEFAULT ''
 );
 
--- 2. Aktifkan Row Level Security (RLS) & Berikan Akses Publik
+-- 2. Berikan Izin Akses Tabel ke Role anon & authenticated
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON TABLE public.rsvp_guests TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+
+-- 3. Aktifkan Row Level Security (RLS) & Berikan Akses Publik
 ALTER TABLE public.rsvp_guests ENABLE ROW LEVEL SECURITY;
 
 -- Kebijakan Akses: Publik diizinkan membaca, menambah, mengubah (check-in), dan menghapus

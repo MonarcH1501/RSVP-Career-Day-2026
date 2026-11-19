@@ -18,8 +18,7 @@ import {
   Copy,
   Check,
   Share2,
-  AlertTriangle,
-  Briefcase
+  AlertTriangle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import QRCode from 'qrcode';
@@ -418,11 +417,6 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
               <span className="px-2 py-0.5 rounded-md bg-amber-400 text-slate-950 text-xs font-black">
                 {submittedGuest.university_name}
               </span>
-              {submittedGuest.pic_position && (
-                <span className="text-emerald-100 text-xs font-medium">
-                  • {submittedGuest.pic_position}
-                </span>
-              )}
             </div>
 
             <div className="mt-4 pt-3 border-t border-white/20 flex flex-wrap items-center gap-2.5 sm:gap-4 text-[11px] sm:text-xs text-emerald-100">
@@ -504,9 +498,6 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nama Peserta</p>
                 <p className="font-bold text-slate-900 mt-0.5 text-xs sm:text-sm">{submittedGuest.pic_name}</p>
-                {submittedGuest.pic_position && (
-                  <p className="text-[11px] text-slate-500">{submittedGuest.pic_position}</p>
-                )}
               </div>
 
               <div>
@@ -904,26 +895,6 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-            
-            {/* Jabatan / Peran */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Jabatan / Peran
-              </label>
-              <div className="relative">
-                <Briefcase className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
-                <input
-                  type="text"
-                  name="pic_position"
-                  value={formData.pic_position}
-                  onChange={handleChange}
-                  placeholder="Contoh: Guru Kelas / Tendik / Dosen"
-                  className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white"
-                />
-              </div>
-            </div>
-
             {/* Nomor WhatsApp */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -936,14 +907,12 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
                   name="pic_phone"
                   value={formData.pic_phone}
                   onChange={handleChange}
-                  placeholder="0812xxxxxxxx"
+                  placeholder="Contoh: 081234567890"
                   required
                   className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white font-medium"
                 />
               </div>
             </div>
-
-          </div>
 
           {/* Catatan / Ucapan Natal */}
           <div>

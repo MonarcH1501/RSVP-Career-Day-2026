@@ -446,9 +446,6 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                       <p className="text-xs text-slate-800 mt-1 flex items-center gap-1 font-bold">
                         <UserCheck className="w-3.5 h-3.5 text-slate-400" />
                         {guest.pic_name}
-                        {guest.pic_position && (
-                          <span className="font-normal text-slate-500">({guest.pic_position})</span>
-                        )}
                       </p>
                     </div>
 
@@ -654,28 +651,16 @@ export const Guestbook: React.FC<GuestbookProps> = ({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Jabatan / Peran</label>
-                  <input
-                    type="text"
-                    value={walkInData.pic_position}
-                    onChange={(e) => setWalkInData({ ...walkInData, pic_position: e.target.value })}
-                    placeholder="Guru / Tendik / Dosen"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:border-emerald-600 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">No. WhatsApp *</label>
-                  <input
-                    type="tel"
-                    value={walkInData.pic_phone}
-                    onChange={(e) => setWalkInData({ ...walkInData, pic_phone: e.target.value })}
-                    placeholder="0812xxxxxxxx"
-                    required
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:border-emerald-600 outline-none"
-                  />
-                </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">No. WhatsApp *</label>
+                <input
+                  type="tel"
+                  value={walkInData.pic_phone}
+                  onChange={(e) => setWalkInData({ ...walkInData, pic_phone: e.target.value })}
+                  placeholder="0812xxxxxxxx"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:border-emerald-600 outline-none"
+                />
               </div>
 
               <div className="pt-2 flex gap-3">

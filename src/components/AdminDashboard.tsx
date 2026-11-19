@@ -326,9 +326,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       'Kategori',
       'Unit / Lembaga',
       'Nama Peserta',
-      'Jabatan / Peran',
       'No WhatsApp',
-      'Email',
       'Status Kehadiran',
       'Jumlah Pax',
       'Catatan',
@@ -343,9 +341,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       `"${g.institution_category}"`,
       `"${g.university_name.replace(/"/g, '""')}"`,
       `"${g.pic_name.replace(/"/g, '""')}"`,
-      `"${(g.pic_position || '').replace(/"/g, '""')}"`,
       `"'${g.pic_phone}"`,
-      `"${(g.pic_email || '').replace(/"/g, '""')}"`,
       `"${g.attendance_status}"`,
       g.attendee_count,
       `"${(g.notes || '').replace(/"/g, '""')}"`,
@@ -638,7 +634,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <p className="text-xs font-bold text-slate-700 mt-1 flex items-center gap-1.5">
                       <User className="w-3.5 h-3.5 text-slate-400" />
                       <span>{guest.pic_name}</span>
-                      {guest.pic_position && <span className="text-slate-400 font-normal">({guest.pic_position})</span>}
                     </p>
 
                     <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -873,7 +868,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <p className="text-xs font-bold text-slate-700 mt-1 flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span>{guest.pic_name}</span>
-                        {guest.pic_position && <span className="text-[11px] font-normal text-slate-400">({guest.pic_position})</span>}
                       </p>
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                         <a
@@ -1014,9 +1008,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           {/* PIC */}
                           <td className="px-4 py-3.5">
                             <p className="font-semibold text-slate-800">{guest.pic_name}</p>
-                            {guest.pic_position && (
-                              <p className="text-[11px] text-slate-400">{guest.pic_position}</p>
-                            )}
                             <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
                               <a
                                 href={`https://wa.me/${guest.pic_phone.replace(/\D/g, '')}`}
@@ -1280,28 +1271,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Jabatan / Peran</label>
-                  <input
-                    type="text"
-                    value={formData.pic_position}
-                    onChange={(e) => setFormData({ ...formData, pic_position: e.target.value })}
-                    placeholder="Contoh: Guru, Staf, Kepala Sekolah"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Status Kehadiran</label>
-                  <select
-                    value={formData.attendance_status}
-                    onChange={(e) => setFormData({ ...formData, attendance_status: e.target.value as AttendanceStatus })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none bg-white font-semibold"
-                  >
-                    <option value="hadir">Bisa Hadir</option>
-                    <option value="tidak_hadir">Berhalangan Hadir</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Status Kehadiran</label>
+                <select
+                  value={formData.attendance_status}
+                  onChange={(e) => setFormData({ ...formData, attendance_status: e.target.value as AttendanceStatus })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 outline-none bg-white font-semibold"
+                >
+                  <option value="hadir">Bisa Hadir</option>
+                  <option value="tidak_hadir">Berhalangan Hadir</option>
+                </select>
               </div>
 
               <div>
@@ -1379,13 +1358,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <p className="font-semibold text-emerald-700">{viewingGuest.pic_phone}</p>
                 </div>
               </div>
-
-              {viewingGuest.pic_position && (
-                <div>
-                  <p className="text-slate-400 text-[10px] uppercase font-bold">Jabatan / Peran</p>
-                  <p className="font-semibold text-slate-800">{viewingGuest.pic_position}</p>
-                </div>
-              )}
 
               {viewingGuest.notes && (
                 <div>

@@ -277,12 +277,12 @@ export const Guestbook: React.FC<GuestbookProps> = ({
         </div>
 
         <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unit Sekolah</p>
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">SKI</p>
           <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
             <span className="text-xl sm:text-2xl font-black text-teal-700">{stats.sekolahCount}</span>
             <span className="text-[11px] sm:text-xs text-slate-400">Peserta</span>
           </div>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">12 Unit Persekolahan</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">Sekolah Kristen Immanuel</p>
         </div>
 
         <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
@@ -330,7 +330,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
             className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
           >
             <option value="all">Semua Instansi</option>
-            <option value="sekolah">Unit Sekolah</option>
+            <option value="sekolah">SKI</option>
             <option value="yayasan">Yayasan YGPKB</option>
             <option value="itbss">ITBSS</option>
           </select>
@@ -617,7 +617,7 @@ export const Guestbook: React.FC<GuestbookProps> = ({
 
               {walkInKey === 'sekolah' && (
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Pilih Unit Sekolah (12 Unit) *</label>
+                  <label className="block font-bold text-slate-700 mb-1">Pilih Unit SKI *</label>
                   <select
                     value={walkInSchoolUnit}
                     onChange={(e) => handleWalkInSchoolUnitChange(e.target.value as SchoolUnit)}

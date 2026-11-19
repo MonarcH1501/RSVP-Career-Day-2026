@@ -34,7 +34,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
               <div className="text-[11px] sm:text-xs text-slate-500 font-medium flex items-center gap-1.5 truncate">
                 <span className="text-emerald-700 font-semibold truncate flex items-center gap-1">
                   <Church className="w-3 h-3 text-emerald-600 shrink-0 inline" />
-                  <span>12 Unit Sekolah • Yayasan YGPKB • ITBSS</span>
+                  <span>SKI • Yayasan YGPKB • ITBSS</span>
                 </span>
               </div>
             </div>

@@ -579,7 +579,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
           <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white leading-tight">
             Perayaan Natal Bersama <br className="hidden sm:inline" />
             <span className="text-transparent bg-clip-text bg-linear-to-r from-amber-300 via-emerald-200 to-teal-200">
-              YGPKB, 12 Unit Sekolah & ITBSS
+              YGPKB, SKI & ITBSS
             </span>
           </h1>
 
@@ -609,7 +609,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
               </div>
               <div className="min-w-0">
                 <p className="text-[9px] text-amber-300 font-bold uppercase tracking-wider">UNIT PARTISIPAN</p>
-                <p className="font-bold text-white text-xs">12 Unit Persekolahan & Kampus ITBSS</p>
+                <p className="font-bold text-white text-xs">SKI & Kampus ITBSS</p>
               </div>
             </div>
           </div>
@@ -781,7 +781,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 mb-4">
             
-            {/* 1. Unit Sekolah */}
+            {/* 1. Unit Sekolah (SKI) */}
             <button
               type="button"
               onClick={() => handleCategorySelect('sekolah')}
@@ -792,7 +792,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
               }`}
             >
               <School className="w-5 h-5 text-emerald-700 shrink-0" />
-              <span className="text-xs font-bold">Unit Sekolah</span>
+              <span className="text-xs font-bold">SKI</span>
               <span className="text-[10px] text-emerald-600 font-semibold">12 Unit Persekolahan</span>
             </button>
 
@@ -832,7 +832,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
           {selectedCategoryKey === 'sekolah' && (
             <div className="bg-emerald-50/60 p-3.5 sm:p-4 rounded-2xl border border-emerald-200/80 animate-in fade-in duration-200">
               <label className="block text-xs font-bold text-emerald-950 mb-2 flex items-center justify-between">
-                <span>Pilih Unit Sekolah Anda (12 Unit):</span>
+                <span>Pilih Unit SKI Anda (12 Unit):</span>
                 <span className="text-[11px] font-extrabold text-emerald-700">Terpilih: {selectedUnit}</span>
               </label>
 

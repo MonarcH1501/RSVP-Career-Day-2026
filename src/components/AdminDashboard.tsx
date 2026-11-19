@@ -389,7 +389,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               Dashboard Presensi Perayaan Natal Internal
             </h1>
             <p className="text-[11px] sm:text-sm text-slate-500 mt-0.5">
-              12 Unit Sekolah • Yayasan YGPKB • ITBSS
+              SKI • Yayasan YGPKB • ITBSS
             </p>
           </div>
         </div>
@@ -520,7 +520,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </h2>
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                Distribusi kehadiran 12 Unit Sekolah, Yayasan Gereja Protestan Kampung Bali, dan ITBSS.
+                Distribusi kehadiran SKI, Yayasan Gereja Protestan Kampung Bali, dan ITBSS.
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -694,7 +694,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <span className="text-xl sm:text-2xl font-black text-slate-900">{kpis.total}</span>
                 <span className="text-[11px] sm:text-xs text-slate-400">Orang</span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">12 Unit, Yayasan, ITBSS</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">SKI, Yayasan, ITBSS</p>
             </div>
 
             <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
@@ -764,7 +764,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
               >
                 <option value="all">Semua Kategori</option>
-                <option value="sekolah">Unit Sekolah (12 Unit)</option>
+                <option value="sekolah">SKI (12 Unit)</option>
                 <option value="yayasan">Yayasan YGPKB</option>
                 <option value="itbss">ITBSS</option>
               </select>
@@ -777,7 +777,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               >
                 <option value="all">Semua Unit</option>
                 {categoryFilter === 'all' || categoryFilter === 'sekolah' ? (
-                  <optgroup label="Unit Sekolah (12 Unit)">
+                  <optgroup label="SKI (12 Unit)">
                     {SCHOOL_UNITS.map((u) => (
                       <option key={u} value={u}>{u}</option>
                     ))}

@@ -230,11 +230,11 @@ export function App() {
             </div>
             <span className="font-bold text-slate-800">Perayaan Natal Bersama</span>
             <span className="text-slate-300">•</span>
-            <span className="text-emerald-700 font-semibold">YGPKB • Unit Sekolah • ITBSS</span>
+            <span className="text-emerald-700 font-semibold">YGPKB • SKI • ITBSS</span>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-slate-400 text-[11px]">
-            <span>12 Unit Sekolah • Yayasan Gereja Protestan Kampung Bali • ITBSS</span>
+            <span>SKI • Yayasan Gereja Protestan Kampung Bali • ITBSS</span>
           </div>
         </div>
       </footer>

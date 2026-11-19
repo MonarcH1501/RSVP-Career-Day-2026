@@ -225,8 +225,8 @@ export function App() {
       <footer className="mt-auto border-t border-slate-200 bg-white py-5 px-3 sm:px-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 text-center sm:text-left">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-emerald-700 p-0.5 border border-emerald-800 shadow-2xs flex items-center justify-center shrink-0">
-              <img src={logoIcon} alt="Logo YGPKB" className="w-full h-full object-contain brightness-0 invert" />
+            <div className="w-6 h-6 rounded-md overflow-hidden border border-rose-200/60 shadow-2xs flex items-center justify-center shrink-0">
+              <img src={logoIcon} alt="Logo YGPKB" className="w-full h-full object-cover" />
             </div>
             <span className="font-bold text-slate-800">Perayaan Natal Bersama</span>
             <span className="text-slate-300">•</span>

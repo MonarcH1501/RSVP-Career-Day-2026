@@ -17,8 +17,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
           
           {/* Brand Logo & Event Title */}
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-linear-to-br from-emerald-600 to-teal-800 p-1 border border-emerald-200/50 shadow-xs flex items-center justify-center shrink-0">
-              <img src={logoIcon} alt="Logo YGPKB" className="w-full h-full object-contain brightness-0 invert" />
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl overflow-hidden shadow-xs border border-rose-200/60 shrink-0">
+              <img src={logoIcon} alt="Logo YGPKB" className="w-full h-full object-cover" />
             </div>
             <div className="text-left min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">

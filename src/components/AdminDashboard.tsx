@@ -367,8 +367,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div className="flex items-start gap-3 sm:gap-4">
-          <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-white p-1 border border-slate-200 shadow-xs flex items-center justify-center shrink-0">
-            <img src={logoIcon} alt="Logo Perayaan Natal" className="w-full h-full object-contain" />
+          <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl overflow-hidden border border-slate-200 shadow-xs flex items-center justify-center shrink-0">
+            <img src={logoIcon} alt="Logo Perayaan Natal" className="w-full h-full object-cover" />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-1.5 mb-1">

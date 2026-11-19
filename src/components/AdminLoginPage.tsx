@@ -43,8 +43,8 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
         
         {/* Brand */}
         <div className="text-center">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white p-1.5 shadow-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center border border-white/20">
-            <img src={logoIcon} alt="Logo Career Day 2026" className="w-full h-full object-contain" />
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden shadow-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center border border-white/20">
+            <img src={logoIcon} alt="Logo YGPKB" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight">
             Portal Admin Panitia

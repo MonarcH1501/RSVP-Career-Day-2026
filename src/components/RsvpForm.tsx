@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, 
   Phone, 
-  Mail, 
   CheckCircle2, 
   AlertCircle, 
   XCircle, 
@@ -944,24 +943,6 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
               </div>
             </div>
 
-          </div>
-
-          {/* Email (Opsional) */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Email <span className="text-slate-400 font-normal text-[11px]">(Opsional - boleh dikosongkan)</span>
-            </label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
-              <input
-                type="email"
-                name="pic_email"
-                value={formData.pic_email}
-                onChange={handleChange}
-                placeholder="nama@email.com (tidak wajib diisi)"
-                className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white"
-              />
-            </div>
           </div>
 
           {/* Catatan / Ucapan Natal */}

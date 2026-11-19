@@ -2,8 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { RsvpGuest, CreateRsvpInput, UpdateRsvpInput } from '../types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://plakmwzxtzohkcxrxmvt.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_FDEgHpTan_cfDmRXrxWw_Q_miJU9D1L';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xeykphocgszjcmdmecql.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_mVoqN2qUyXwLuYbWxWWvXA_Hb1k8j7F';
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export type DatabaseType = 'mysql' | 'supabase' | 'local';

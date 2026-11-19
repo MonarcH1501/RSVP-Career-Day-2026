@@ -20,6 +20,7 @@ import {
   SCHOOL_UNITS, 
   YAYASAN_NAME, 
   ITBSS_NAME, 
+  ENABLE_QR_SCAN,
   type SchoolUnit,
   type RsvpGuest, 
   type CreateRsvpInput, 
@@ -236,19 +237,23 @@ export const Guestbook: React.FC<GuestbookProps> = ({
             Presensi Acara Perayaan Natal
           </h2>
           <p className="text-xs sm:text-sm text-emerald-100/90 mt-1 max-w-xl">
-            Scan QR Code tiket digital peserta atau klik tombol check-in untuk mencatat kehadiran seketika.
+            {ENABLE_QR_SCAN
+              ? 'Scan QR Code tiket digital peserta atau klik tombol check-in untuk mencatat kehadiran seketika.'
+              : 'Kelola dan catat kehadiran peserta dari daftar pendaftaran formulir online.'}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Tombol Buka Kamera Scanner QR */}
-          <button
-            onClick={() => setIsScannerOpen(true)}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm shadow-md shadow-emerald-950/40 transition-all active:scale-[0.98] border border-emerald-400/30 cursor-pointer"
-          >
-            <Camera className="w-4 h-4 text-emerald-100" />
-            <span>Scan QR Presensi</span>
-          </button>
+          {ENABLE_QR_SCAN && (
+            <button
+              onClick={() => setIsScannerOpen(true)}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm shadow-md shadow-emerald-950/40 transition-all active:scale-[0.98] border border-emerald-400/30 cursor-pointer"
+            >
+              <Camera className="w-4 h-4 text-emerald-100" />
+              <span>Scan QR Presensi</span>
+            </button>
+          )}
 
           <button
             onClick={() => setIsWalkInModalOpen(true)}
@@ -685,13 +690,15 @@ export const Guestbook: React.FC<GuestbookProps> = ({
       )}
 
       {/* QR SCANNER MODAL */}
-      <QrScannerModal
-        isOpen={isScannerOpen}
-        onClose={() => setIsScannerOpen(false)}
-        guests={guests}
-        receptionistStaff={receptionistStaff}
-        onCheckIn={onCheckIn}
-      />
+      {ENABLE_QR_SCAN && (
+        <QrScannerModal
+          isOpen={isScannerOpen}
+          onClose={() => setIsScannerOpen(false)}
+          guests={guests}
+          receptionistStaff={receptionistStaff}
+          onCheckIn={onCheckIn}
+        />
+      )}
 
     </div>
   );

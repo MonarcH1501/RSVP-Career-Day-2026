@@ -25,6 +25,9 @@ export type SchoolUnit = typeof SCHOOL_UNITS[number];
 export const YAYASAN_NAME = 'Yayasan Gereja Protestan Kampung Bali (YGPKB)';
 export const ITBSS_NAME = 'Institut Teknologi dan Bisnis Sabda Setia (ITBSS)';
 
+// Flag untuk mengaktifkan / menonaktifkan fitur QR Code & Kamera Scanner sementara
+export const ENABLE_QR_SCAN = false;
+
 export const ALL_INSTITUTION_UNITS = [
   ...SCHOOL_UNITS,
   YAYASAN_NAME,

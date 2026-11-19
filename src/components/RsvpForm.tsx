@@ -26,6 +26,7 @@ import {
   SCHOOL_UNITS, 
   YAYASAN_NAME, 
   ITBSS_NAME, 
+  ENABLE_QR_SCAN,
   type SchoolUnit,
   type CreateRsvpInput, 
   type AttendanceStatus, 
@@ -402,7 +403,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
             <div className="flex items-center justify-between gap-2">
               <span className="text-[10px] sm:text-[11px] font-bold tracking-wider uppercase px-2.5 py-1 bg-white/20 backdrop-blur-xs rounded-full flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-amber-300" />
-                E-Tiket Presensi Natal
+                {ENABLE_QR_SCAN ? 'E-Tiket Presensi Natal' : 'Bukti Pendaftaran Natal'}
               </span>
               <span className="text-[11px] sm:text-xs text-emerald-100 flex items-center gap-1 font-semibold shrink-0">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
@@ -434,8 +435,8 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
           {/* Body Tiket & QR Code */}
           <div className="p-4 sm:p-7 space-y-4 sm:space-y-6">
             
-            {/* QR Code Khusus Presensi */}
-            {isAttending && qrCodeUrl && (
+            {/* QR Code Khusus Presensi (Hanya jika fitur QR diaktifkan) */}
+            {isAttending && ENABLE_QR_SCAN && qrCodeUrl && (
               <div className="bg-linear-to-b from-emerald-50/80 to-teal-50/40 border-2 border-dashed border-emerald-300 p-4 sm:p-6 rounded-2xl sm:rounded-3xl flex flex-col items-center text-center">
                 <div className="bg-white p-2.5 rounded-2xl shadow-md border border-emerald-100 mb-2.5">
                   <img src={qrCodeUrl} alt="QR Code Presensi Pribadi" className="w-44 h-44 sm:w-56 sm:h-56" />
@@ -485,13 +486,55 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
               </div>
             )}
 
-            {/* Banner Pengingat Screenshot */}
-            <div className="bg-amber-50 border border-amber-200 p-3 sm:p-3.5 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900">
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-[11px] text-amber-800 leading-relaxed">
-                <strong>Tips:</strong> Screenshot QR Code di atas atau simpan link tiket ini agar mudah dibuka kembali saat tiba di lokasi perayaan!
-              </p>
-            </div>
+            {/* Konfirmasi Pendaftaran (Tampilan Bersih saat QR dinonaktifkan) */}
+            {isAttending && !ENABLE_QR_SCAN && (
+              <div className="bg-linear-to-b from-emerald-50/90 to-teal-50/50 border border-emerald-200/80 p-5 sm:p-6 rounded-2xl sm:rounded-3xl flex flex-col items-center text-center space-y-3 shadow-xs">
+                <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shadow-inner">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-600 text-white">
+                    Pendaftaran Berhasil
+                  </span>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 mt-2">
+                    Data Kehadiran Anda Telah Tercatat
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-1 max-w-md leading-relaxed">
+                    Terima kasih Bapak/Ibu <strong>{submittedGuest.pic_name}</strong> dari <strong>{submittedGuest.university_name}</strong>. Konfirmasi kehadiran Anda pada Perayaan Natal Bersama telah berhasil masuk ke dalam database panitia.
+                  </p>
+                </div>
+
+                <div className="pt-2 flex flex-wrap gap-2 justify-center">
+                  <a
+                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Shalom! Konfirmasi kehadiran Perayaan Natal Bersama atas nama ${submittedGuest.pic_name} (${submittedGuest.university_name}) sudah berhasil terdaftar.`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-sm transition-all active:scale-[0.98]"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Kirim Bukti ke WhatsApp Saya</span>
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Banner Pengingat */}
+            {ENABLE_QR_SCAN ? (
+              <div className="bg-amber-50 border border-amber-200 p-3 sm:p-3.5 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-amber-800 leading-relaxed">
+                  <strong>Tips:</strong> Screenshot QR Code di atas atau simpan link tiket ini agar mudah dibuka kembali saat tiba di lokasi perayaan!
+                </p>
+              </div>
+            ) : (
+              <div className="bg-emerald-50 border border-emerald-200 p-3 sm:p-3.5 rounded-2xl flex items-start gap-2.5 text-xs text-emerald-900">
+                <Sparkles className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-emerald-800 leading-relaxed">
+                  Data Anda sudah tersimpan di sistem. Tidak perlu cetak tiket fisik atau bawa QR code, panitia akan mendata kehadiran Anda secara langsung.
+                </p>
+              </div>
+            )}
 
             {/* Ringkasan Data (Grid 2 Kolom) */}
             <div className="grid grid-cols-2 gap-3 pb-4 border-b border-slate-100 text-xs">
@@ -575,11 +618,15 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
           </h1>
 
           <p className="mt-2.5 text-slate-200 text-xs sm:text-sm leading-relaxed max-w-2xl">
-            Sistem konfirmasi kehadiran dan e-tiket QR Code internal untuk Bapak/Ibu Guru, Dosen, Tenaga Kependidikan, Staf, serta Pengurus Yayasan.
+            {ENABLE_QR_SCAN
+              ? 'Sistem konfirmasi kehadiran dan e-tiket QR Code internal untuk Bapak/Ibu Guru, Dosen, Tenaga Kependidikan, Staf, serta Pengurus Yayasan.'
+              : 'Sistem formulir pendataan dan konfirmasi kehadiran untuk Bapak/Ibu Guru, Dosen, Tenaga Kependidikan, Staf, serta Pengurus Yayasan.'}
           </p>
 
           <p className="text-[11px] text-emerald-200 bg-white/10 px-3 py-1.5 rounded-xl border border-white/10 mt-3 inline-block">
-            ℹ️ Setiap peserta mengisi 1 formulir untuk mendapatkan <strong>QR Code tiket presensi pribadi</strong> yang akan discan saat tiba di lokasi.
+            {ENABLE_QR_SCAN
+              ? 'ℹ️ Setiap peserta mengisi 1 formulir untuk mendapatkan QR Code tiket presensi pribadi yang akan discan saat tiba di lokasi.'
+              : 'ℹ️ Silakan mengisi formulir di bawah ini untuk konfirmasi kehadiran Anda pada acara Perayaan Natal Bersama.'}
           </p>
 
           {/* Details Bar */}
@@ -654,8 +701,12 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
               <Search className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-800">Cari E-Tiket Saya</p>
-              <p className="text-[10px] text-slate-400">Masukkan nomor WhatsApp Anda untuk menampilkan kembali tiket QR</p>
+              <p className="text-xs font-bold text-slate-800">
+                {ENABLE_QR_SCAN ? 'Cari E-Tiket Saya' : 'Cari Data Pendaftaran Saya'}
+              </p>
+              <p className="text-[10px] text-slate-400">
+                {ENABLE_QR_SCAN ? 'Masukkan nomor WhatsApp Anda untuk menampilkan kembali tiket QR' : 'Masukkan nomor WhatsApp Anda untuk mengecek status pendaftaran'}
+              </p>
             </div>
           </div>
 
@@ -671,7 +722,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
               type="submit"
               className="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all shrink-0 active:scale-95 shadow-xs"
             >
-              Cek Tiket
+              {ENABLE_QR_SCAN ? 'Cek Tiket' : 'Cek Data'}
             </button>
           </form>
         </div>
@@ -730,7 +781,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
               </div>
               <div>
                 <p className="font-extrabold text-slate-900 text-xs sm:text-sm">Bisa Hadir</p>
-                <p className="text-[10px] sm:text-xs text-emerald-700 font-semibold mt-0.5">Dapatkan QR Tiket</p>
+                <p className="text-[10px] sm:text-xs text-emerald-700 font-semibold mt-0.5">{ENABLE_QR_SCAN ? 'Dapatkan QR Tiket' : 'Konfirmasi Hadir'}</p>
               </div>
             </div>
 
@@ -946,7 +997,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
             ) : (
               <>
                 <Send className="w-4 h-4" />
-                <span>Kirim Konfirmasi & Dapatkan E-Tiket QR</span>
+                <span>{ENABLE_QR_SCAN ? 'Kirim Konfirmasi & Dapatkan E-Tiket QR' : 'Kirim Konfirmasi Pendaftaran'}</span>
               </>
             )}
           </button>

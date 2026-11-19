@@ -40,12 +40,12 @@ export const Navbar: React.FC<NavbarProps> = () => {
             </div>
           </div>
 
-          {/* Right Action: Badge Presensi Digital */}
+          {/* Right Action: Badge Status Pendataan */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold shadow-2xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="hidden sm:inline">Presensi QR Mandiri</span>
-              <span className="sm:hidden text-[11px]">Presensi QR</span>
+              <span className="hidden sm:inline">Pendataan Online Aktif</span>
+              <span className="sm:hidden text-[11px]">Form Online</span>
             </span>
           </div>
 

@@ -28,7 +28,7 @@ import QRCode from 'qrcode';
 import { Guestbook } from './Guestbook';
 import logoIcon from '../assets/logoicon.png';
 import type { RsvpGuest, CreateRsvpInput, UpdateRsvpInput, AttendanceStatus, InstitutionCategory } from '../types';
-import { SCHOOL_UNITS, YAYASAN_NAME, ITBSS_NAME, ALL_INSTITUTION_UNITS } from '../types';
+import { SCHOOL_UNITS, YAYASAN_NAME, ITBSS_NAME, ALL_INSTITUTION_UNITS, ENABLE_QR_SCAN } from '../types';
 
 interface AdminDashboardProps {
   guests: RsvpGuest[];
@@ -721,7 +721,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <span className="text-[11px] sm:text-xs text-slate-400">/ {kpis.hadirCount}</span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-teal-600 font-medium mt-1.5 flex items-center gap-1">
-                <Clock className="w-3 h-3 shrink-0" /> Presensi QR
+                <Clock className="w-3 h-3 shrink-0" /> {ENABLE_QR_SCAN ? 'Presensi QR' : 'Tercatat Hadir'}
               </p>
             </div>
 
@@ -915,14 +915,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     )}
 
                     {/* Action Buttons Toolbar */}
-                    <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-slate-100">
-                      <button
-                        onClick={() => handleOpenQr(guest)}
-                        className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-200 text-slate-700 hover:text-emerald-700 text-[10px] font-bold active:scale-95 transition-all"
-                      >
-                        <QrIcon className="w-4 h-4 text-emerald-600" />
-                        <span>QR Tiket</span>
-                      </button>
+                    <div className={`grid ${ENABLE_QR_SCAN ? 'grid-cols-4' : 'grid-cols-3'} gap-1.5 pt-2 border-t border-slate-100`}>
+                      {ENABLE_QR_SCAN && (
+                        <button
+                          onClick={() => handleOpenQr(guest)}
+                          className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-200 text-slate-700 hover:text-emerald-700 text-[10px] font-bold active:scale-95 transition-all"
+                        >
+                          <QrIcon className="w-4 h-4 text-emerald-600" />
+                          <span>QR Tiket</span>
+                        </button>
+                      )}
 
                       <button
                         onClick={() => setViewingGuest(guest)}
@@ -1069,13 +1071,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           {/* Actions */}
                           <td className="px-4 py-3.5 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1">
-                              <button
-                                onClick={() => handleOpenQr(guest)}
-                                title="Lihat QR Code"
-                                className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
-                              >
-                                <QrIcon className="w-4 h-4" />
-                              </button>
+                              {ENABLE_QR_SCAN && (
+                                <button
+                                  onClick={() => handleOpenQr(guest)}
+                                  title="Lihat QR Code"
+                                  className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+                                >
+                                  <QrIcon className="w-4 h-4" />
+                                </button>
+                              )}
 
                               <button
                                 onClick={() => setViewingGuest(guest)}
@@ -1114,7 +1118,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )}
 
       {/* MODAL: QR CODE */}
-      {qrModalGuest && modalQrUrl && (
+      {ENABLE_QR_SCAN && qrModalGuest && modalQrUrl && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-sm w-full p-5 sm:p-6 text-center relative my-auto max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
             <button

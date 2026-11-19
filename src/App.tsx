@@ -145,7 +145,7 @@ export function App() {
 
   const handleAdminAuthSuccess = () => {
     setIsAdminLoggedIn(true);
-    showToast('Selamat datang di Dashboard Admin Career Day 2026!');
+    showToast('Selamat datang di Dashboard Admin Perayaan Natal!');
   };
 
   const handleAdminLogout = () => {

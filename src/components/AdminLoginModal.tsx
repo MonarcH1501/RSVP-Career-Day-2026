@@ -28,7 +28,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       setPin('');
       onSuccess();
     } else {
-      setError('PIN Akses salah. Silakan periksa kembali atau gunakan PIN default: 2026.');
+      setError('PIN Akses salah. Silakan periksa kembali.');
     }
   };
 
@@ -42,13 +42,13 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
           <X className="w-5 h-5" />
         </button>
 
-        <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-4">
+        <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto mb-4">
           <Lock className="w-6 h-6" />
         </div>
 
         <h3 className="text-xl font-bold text-slate-900">Akses Dashboard Admin</h3>
         <p className="text-xs text-slate-500 mt-1 mb-5">
-          Area khusus panitia Career Day 2026 untuk mengelola data kehadiran.
+          Area khusus panitia untuk mengelola data presensi kehadiran.
         </p>
 
         {error && (
@@ -67,15 +67,12 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                 maxLength={8}
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
-                placeholder="Masukkan PIN Admin (Default: 2026)"
+                placeholder="Masukkan PIN Admin"
                 autoFocus
                 required
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-base tracking-widest focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-base tracking-widest focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none"
               />
             </div>
-            <p className="text-[11px] text-slate-400 mt-2">
-              Default PIN panitia: <strong className="text-slate-600">2026</strong>
-            </p>
           </div>
 
           <div className="flex gap-2 pt-2">

@@ -27,7 +27,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
         sessionStorage.setItem('career_day_admin_auth', 'true');
         onLoginSuccess();
       } else {
-        setError('Username atau Password salah. (Default: admin / @Qwerty123)');
+        setError('Username atau Password salah. Silakan coba lagi.');
       }
       setIsLoading(false);
     }, 400);
@@ -50,7 +50,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
             Portal Admin Panitia
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-slate-400">
-            Makrab Career Day 2026 • Restoran Gajah Mada Pontianak
+            Perayaan Natal Bersama • YGPKB, SKI & ITBSS
           </p>
         </div>
 
@@ -98,12 +98,6 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
                   className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none text-slate-900 transition-all"
                 />
               </div>
-            </div>
-
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-[11px] text-slate-500 space-y-0.5">
-              <p className="font-semibold text-slate-700">Kredensial Default:</p>
-              <p>Username: <code className="text-indigo-600 font-bold">admin</code></p>
-              <p>Password: <code className="text-indigo-600 font-bold">@Qwerty123</code></p>
             </div>
 
             <div className="pt-2">

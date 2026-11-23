@@ -175,16 +175,16 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!formData.university_name.trim()) {
-      setErrorMessage('Mohon pilih unit sekolah atau asal lembaga Anda.');
-      return;
-    }
     if (!formData.pic_name.trim()) {
       setErrorMessage('Nama lengkap peserta wajib diisi.');
       return;
     }
     if (!formData.pic_phone.trim()) {
       setErrorMessage('Nomor WhatsApp wajib diisi.');
+      return;
+    }
+    if (!formData.university_name.trim()) {
+      setErrorMessage('Mohon pilih unit sekolah atau asal lembaga Anda.');
       return;
     }
 
@@ -684,8 +684,58 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
           </div>
         )}
 
-        {/* SECTION 1: Status Kehadiran */}
-        <div>
+        {/* 1. DATA DIRI PESERTA (Nama & No. WhatsApp) */}
+        <div className="space-y-3.5 sm:space-y-4">
+          <div className="border-b border-slate-100 pb-2">
+            <label className="block text-xs sm:text-sm font-extrabold text-slate-800">
+              Identitas Peserta <span className="text-rose-500">*</span>
+            </label>
+            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+              Silakan isi nama lengkap dan nomor WhatsApp aktif Anda
+            </p>
+          </div>
+
+          {/* Nama Lengkap */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Nama Lengkap Peserta <span className="text-rose-500">*</span>
+            </label>
+            <div className="relative">
+              <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
+              <input
+                type="text"
+                name="pic_name"
+                value={formData.pic_name}
+                onChange={handleChange}
+                placeholder="Contoh: Bpk. Yohanes / Ibu Maria, S.Pd"
+                required
+                className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white font-medium"
+              />
+            </div>
+          </div>
+
+          {/* Nomor WhatsApp */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              No. WhatsApp Aktif <span className="text-rose-500">*</span>
+            </label>
+            <div className="relative">
+              <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
+              <input
+                type="tel"
+                name="pic_phone"
+                value={formData.pic_phone}
+                onChange={handleChange}
+                placeholder="Contoh: 081234567890"
+                required
+                className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white font-medium"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 2. KONFIRMASI KEHADIRAN & JUMLAH KONSUMSI */}
+        <div className="pt-3 border-t border-slate-100">
           <label className="block text-xs sm:text-sm font-extrabold text-slate-800 mb-1">
             Konfirmasi Kehadiran Anda <span className="text-rose-500">*</span>
           </label>
@@ -694,7 +744,6 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
           </p>
 
           <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
-            
             {/* Bisa Hadir */}
             <div
               onClick={() => handleStatusSelect('hadir')}
@@ -718,7 +767,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
               </div>
               <div>
                 <p className="font-extrabold text-slate-900 text-xs sm:text-sm">Bisa Hadir</p>
-                <p className="text-[10px] sm:text-xs text-emerald-700 font-semibold mt-0.5">{ENABLE_QR_SCAN ? 'Dapatkan QR Tiket' : 'Konfirmasi Hadir'}</p>
+                <p className="text-[10px] sm:text-xs text-emerald-700 font-semibold mt-0.5">Konfirmasi Hadir</p>
               </div>
             </div>
 
@@ -748,10 +797,9 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
                 <p className="text-[10px] sm:text-xs text-rose-600 font-semibold mt-0.5">Belum bisa hadir</p>
               </div>
             </div>
-
           </div>
 
-          {/* Input Jumlah Kehadiran (Khusus Pendataan Konsumsi) */}
+          {/* Input Jumlah Kehadiran (Khusus Pendataan Konsumsi - hanya jika Bisa Hadir) */}
           {formData.attendance_status === 'hadir' && (
             <div className="mt-3.5 sm:mt-4 bg-emerald-50/70 p-3.5 sm:p-4 rounded-2xl border border-emerald-200/90 space-y-2 animate-in fade-in duration-200">
               <div className="flex items-center justify-between gap-2">
@@ -812,19 +860,21 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
           )}
         </div>
 
-        {/* SECTION 2: Kategori Asal Lembaga / Bagian */}
+        {/* 3. UNIT ASAL / ASAL INSTANSI */}
         <div className="pt-3 border-t border-slate-100">
-          <label className="block text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+          <label className="block text-xs sm:text-sm font-extrabold text-slate-800 mb-1">
             Pilih Asal Instansi / Bagian <span className="text-rose-500">*</span>
           </label>
+          <p className="text-[11px] sm:text-xs text-slate-500 mb-3">
+            Tentukan unit asal tempat Anda bertugas / bernaung
+          </p>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 mb-4">
-            
             {/* 1. Unit Sekolah (SKI) */}
             <button
               type="button"
               onClick={() => handleCategorySelect('sekolah')}
-              className={`p-3 sm:p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
+              className={`p-3 sm:p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer ${
                 selectedCategoryKey === 'sekolah'
                   ? 'bg-emerald-50/90 border-emerald-600 text-emerald-900 font-extrabold ring-2 ring-emerald-500/20 shadow-xs'
                   : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -839,7 +889,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
             <button
               type="button"
               onClick={() => handleCategorySelect('yayasan')}
-              className={`p-3 sm:p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
+              className={`p-3 sm:p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer ${
                 selectedCategoryKey === 'yayasan'
                   ? 'bg-purple-50/90 border-purple-600 text-purple-900 font-extrabold ring-2 ring-purple-500/20 shadow-xs'
                   : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -854,7 +904,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
             <button
               type="button"
               onClick={() => handleCategorySelect('itbss')}
-              className={`p-3 sm:p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
+              className={`p-3 sm:p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer ${
                 selectedCategoryKey === 'itbss'
                   ? 'bg-blue-50/90 border-blue-600 text-blue-900 font-extrabold ring-2 ring-blue-500/20 shadow-xs'
                   : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -864,7 +914,6 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
               <span className="text-xs font-bold">ITBSS</span>
               <span className="text-[10px] text-blue-600 font-semibold">Institut Sabda Setia</span>
             </button>
-
           </div>
 
           {/* SUB-SELEKSI KHUSUS UNIT SEKOLAH: 12 UNIT */}
@@ -883,7 +932,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
                       key={unit}
                       type="button"
                       onClick={() => handleUnitSelect(unit)}
-                      className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all text-center border ${
+                      className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all text-center border cursor-pointer ${
                         isSelected
                           ? 'bg-emerald-700 text-white border-emerald-800 shadow-xs scale-[1.02]'
                           : 'bg-white text-slate-700 border-emerald-200 hover:bg-emerald-100/50'
@@ -918,65 +967,21 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
               </div>
             </div>
           )}
-
         </div>
 
-        {/* SECTION 3: Identitas Personal Peserta */}
-        <div className="space-y-3.5 sm:space-y-4 pt-3 border-t border-slate-100">
-          
-          {/* Nama Lengkap */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Nama Lengkap Peserta <span className="text-rose-500">*</span>
-            </label>
-            <div className="relative">
-              <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
-              <input
-                type="text"
-                name="pic_name"
-                value={formData.pic_name}
-                onChange={handleChange}
-                placeholder="Contoh: Bpk. Yohanes / Ibu Maria, S.Pd"
-                required
-                className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white font-medium"
-              />
-            </div>
-          </div>
-
-            {/* Nomor WhatsApp */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                No. WhatsApp Aktif <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
-                <input
-                  type="tel"
-                  name="pic_phone"
-                  value={formData.pic_phone}
-                  onChange={handleChange}
-                  placeholder="Contoh: 081234567890"
-                  required
-                  className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white font-medium"
-                />
-              </div>
-            </div>
-
-          {/* Catatan / Ucapan Natal */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Pesan / Ucapan Natal <span className="text-slate-400 font-normal">(Opsional)</span>
-            </label>
-            <textarea
-              name="notes"
-              rows={2}
-              value={formData.notes}
-              onChange={handleChange}
-              placeholder="Tuliskan ucapan Natal atau pesan khusus untuk panitia..."
-              className="w-full p-3 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white"
-            ></textarea>
-          </div>
-
+        {/* 4. PESAN / UCAPAN NATAL */}
+        <div className="pt-3 border-t border-slate-100">
+          <label className="block text-xs font-bold text-slate-700 mb-1">
+            Pesan / Ucapan Natal <span className="text-slate-400 font-normal">(Opsional)</span>
+          </label>
+          <textarea
+            name="notes"
+            rows={2}
+            value={formData.notes}
+            onChange={handleChange}
+            placeholder="Tuliskan ucapan Natal atau pesan khusus untuk panitia..."
+            className="w-full p-3 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white"
+          ></textarea>
         </div>
 
         {/* Submit Button */}

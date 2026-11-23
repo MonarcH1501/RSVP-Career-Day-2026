@@ -16,7 +16,9 @@ import {
   AlertTriangle,
   FileSpreadsheet,
   MapPin,
-  BookOpenCheck,
+  School,
+  Church,
+  GraduationCap,
   LayoutDashboard,
   Globe,
   User,
@@ -25,7 +27,6 @@ import {
   QrCode as QrIcon
 } from 'lucide-react';
 import QRCode from 'qrcode';
-import { Guestbook } from './Guestbook';
 import logoIcon from '../assets/logoicon.png';
 import type { RsvpGuest, CreateRsvpInput, UpdateRsvpInput, AttendanceStatus, InstitutionCategory } from '../types';
 import { SCHOOL_UNITS, YAYASAN_NAME, ITBSS_NAME, ALL_INSTITUTION_UNITS, ENABLE_QR_SCAN } from '../types';
@@ -37,7 +38,7 @@ interface AdminDashboardProps {
   onCreateGuest: (data: CreateRsvpInput) => Promise<{ data: RsvpGuest | null; error: string | null }>;
   onUpdateGuest: (id: string, data: UpdateRsvpInput) => Promise<{ data: RsvpGuest | null; error: string | null }>;
   onDeleteGuest: (id: string) => Promise<{ success: boolean; error: string | null }>;
-  onCheckInToggle: (id: string, checkedIn: boolean, staffName?: string) => Promise<void>;
+  onCheckInToggle?: (id: string, checkedIn: boolean, staffName?: string) => Promise<void>;
   onApproveGuest?: (id: string, status: 'approved' | 'rejected') => Promise<void>;
   onLogoutAdmin: () => void;
   onGoToPublicPage: () => void;
@@ -50,17 +51,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onCreateGuest,
   onUpdateGuest,
   onDeleteGuest,
-  onCheckInToggle,
   onApproveGuest,
   onLogoutAdmin,
   onGoToPublicPage,
 }) => {
-  const [adminTab, setAdminTab] = useState<'guestbook' | 'master' | 'rekap' | 'pending'>('guestbook');
+  const [adminTab, setAdminTab] = useState<'rekap' | 'master' | 'pending'>('rekap');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [unitFilter, setUnitFilter] = useState<string>('all');
-  const [checkInFilter, setCheckInFilter] = useState<string>('all');
 
   const pendingGuests = useMemo(() => {
     return guests.filter((g) => g.approval_status === 'pending');
@@ -139,36 +138,52 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       }
 
       if (statusFilter !== 'all' && g.attendance_status !== statusFilter) return false;
-      if (checkInFilter === 'checked_in' && !g.is_checked_in) return false;
-      if (checkInFilter === 'not_checked_in' && g.is_checked_in) return false;
 
       return true;
     });
-  }, [guests, searchTerm, categoryFilter, unitFilter, statusFilter, checkInFilter]);
+  }, [guests, searchTerm, categoryFilter, unitFilter, statusFilter]);
 
   // Key KPI metrics
   const kpis = useMemo(() => {
     const total = guests.length;
     const hadir = guests.filter((g) => g.attendance_status === 'hadir');
     const tidakHadir = guests.filter((g) => g.attendance_status === 'tidak_hadir');
-    const checkedIn = guests.filter((g) => g.is_checked_in);
     const pending = guests.filter((g) => g.approval_status === 'pending');
     const totalPaxHadir = hadir.reduce((sum, g) => sum + (g.attendee_count || 1), 0);
 
     const sekolahGuests = guests.filter((g) => g.institution_category === 'sekolah');
+    const sekolahHadir = sekolahGuests.filter((g) => g.attendance_status === 'hadir');
+    const sekolahPax = sekolahHadir.reduce((sum, g) => sum + (g.attendee_count || 1), 0);
+    const sekolahTidakHadir = sekolahGuests.filter((g) => g.attendance_status === 'tidak_hadir').length;
+
     const yayasanGuests = guests.filter((g) => g.institution_category === 'yayasan');
+    const yayasanHadir = yayasanGuests.filter((g) => g.attendance_status === 'hadir');
+    const yayasanPax = yayasanHadir.reduce((sum, g) => sum + (g.attendee_count || 1), 0);
+    const yayasanTidakHadir = yayasanGuests.filter((g) => g.attendance_status === 'tidak_hadir').length;
+
     const itbssGuests = guests.filter((g) => g.institution_category === 'itbss');
+    const itbssHadir = itbssGuests.filter((g) => g.attendance_status === 'hadir');
+    const itbssPax = itbssHadir.reduce((sum, g) => sum + (g.attendee_count || 1), 0);
+    const itbssTidakHadir = itbssGuests.filter((g) => g.attendance_status === 'tidak_hadir').length;
 
     return {
       total,
       hadirCount: hadir.length,
       tidakHadirCount: tidakHadir.length,
-      checkedInCount: checkedIn.length,
       pendingCount: pending.length,
       totalPaxHadir,
       sekolahCount: sekolahGuests.length,
+      sekolahHadirCount: sekolahHadir.length,
+      sekolahPax,
+      sekolahTidakHadir,
       yayasanCount: yayasanGuests.length,
+      yayasanHadirCount: yayasanHadir.length,
+      yayasanPax,
+      yayasanTidakHadir,
       itbssCount: itbssGuests.length,
+      itbssHadirCount: itbssHadir.length,
+      itbssPax,
+      itbssTidakHadir,
     };
   }, [guests]);
 
@@ -177,11 +192,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return ALL_INSTITUTION_UNITS.map((unit) => {
       const unitGuests = guests.filter((g) => g.university_name === unit);
       const hadirGuests = unitGuests.filter((g) => g.attendance_status === 'hadir');
-      const checkedInGuests = unitGuests.filter((g) => g.is_checked_in);
+      const tidakHadirGuests = unitGuests.filter((g) => g.attendance_status === 'tidak_hadir');
       const totalPax = hadirGuests.reduce((sum, g) => sum + (g.attendee_count || 1), 0);
-      const checkInRate = hadirGuests.length > 0 
-        ? Math.round((checkedInGuests.length / hadirGuests.length) * 100) 
-        : 0;
 
       let category: 'sekolah' | 'yayasan' | 'itbss' = 'sekolah';
       if (unit === YAYASAN_NAME) category = 'yayasan';
@@ -192,9 +204,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         category,
         totalRegistered: unitGuests.length,
         hadirCount: hadirGuests.length,
-        checkedInCount: checkedInGuests.length,
+        tidakHadirCount: tidakHadirGuests.length,
         totalPax,
-        checkInRate,
       };
     });
   }, [guests]);
@@ -328,11 +339,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       'Nama Peserta',
       'No WhatsApp',
       'Status Kehadiran',
-      'Jumlah Pax',
+      'Jumlah Kehadiran (Porsi Konsumsi)',
       'Catatan',
-      'Presensi Kehadiran',
-      'Waktu Presensi',
-      'Dicatat Oleh',
       'Waktu Pendaftaran',
     ];
 
@@ -342,12 +350,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       `"${g.university_name.replace(/"/g, '""')}"`,
       `"${g.pic_name.replace(/"/g, '""')}"`,
       `"'${g.pic_phone}"`,
-      `"${g.attendance_status}"`,
-      g.attendee_count,
+      `"${g.attendance_status === 'hadir' ? 'Bisa Hadir' : 'Berhalangan'}"`,
+      g.attendance_status === 'hadir' ? (g.attendee_count || 1) : 0,
       `"${(g.notes || '').replace(/"/g, '""')}"`,
-      g.is_checked_in ? 'Hadir' : 'Belum Hadir',
-      g.checked_in_at ? `"${new Date(g.checked_in_at).toLocaleString('id-ID')}"` : '""',
-      `"${(g.checked_in_by || '').replace(/"/g, '""')}"`,
       `"${new Date(g.created_at).toLocaleString('id-ID')}"`,
     ]);
 
@@ -355,7 +360,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Presensi_Natal_Internal_YGPKB_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `Rekap_Kehadiran_Konsumsi_Natal_YGPKB_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -439,51 +444,81 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
+      {/* KPI Cards Grid (4 Cards) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 mb-4 sm:mb-6">
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Formulir</p>
+          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+            <span className="text-xl sm:text-2xl font-black text-slate-900">{kpis.total}</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">Responden</span>
+          </div>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">SKI, Yayasan, ITBSS</p>
+        </div>
+
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Bisa Hadir</p>
+          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+            <span className="text-xl sm:text-2xl font-black text-emerald-600">{kpis.hadirCount}</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">Pendaftaran</span>
+          </div>
+          <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-1.5 flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3 shrink-0" /> Terkonfirmasi Hadir
+          </p>
+        </div>
+
+        <div className="bg-linear-to-br from-emerald-600 to-teal-700 text-white p-3.5 sm:p-4 rounded-2xl border border-emerald-500 shadow-md shadow-emerald-950/20">
+          <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-emerald-100">Total Porsi Konsumsi</p>
+          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+            <span className="text-2xl sm:text-3xl font-black text-white">{kpis.totalPaxHadir}</span>
+            <span className="text-xs sm:text-sm text-emerald-100 font-bold">Porsi</span>
+          </div>
+          <p className="text-[10px] sm:text-[11px] text-emerald-100 font-medium mt-1.5 flex items-center gap-1">
+            <Utensils className="w-3 h-3 shrink-0 text-amber-300" /> Kebutuhan Konsumsi Natal
+          </p>
+        </div>
+
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Berhalangan</p>
+          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
+            <span className="text-xl sm:text-2xl font-black text-rose-500">{kpis.tidakHadirCount}</span>
+            <span className="text-[11px] sm:text-xs text-slate-400">Orang</span>
+          </div>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">Tidak dapat hadir</p>
+        </div>
+      </div>
+
       {/* Subtab Switcher */}
       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 bg-slate-200/60 p-1 sm:p-1.5 rounded-2xl mb-4 sm:mb-6 w-full sm:w-fit border border-slate-200">
         <button
-          onClick={() => setAdminTab('guestbook')}
-          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-            adminTab === 'guestbook'
-              ? 'bg-white text-emerald-700 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <BookOpenCheck className="w-4 h-4 shrink-0 text-emerald-600" />
-          <span className="hidden sm:inline">Presensi Meja Depan (Buku Tamu)</span>
-          <span className="sm:hidden">Meja Depan</span>
-        </button>
-
-        <button
-          onClick={() => setAdminTab('master')}
-          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-            adminTab === 'master'
-              ? 'bg-white text-emerald-700 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <LayoutDashboard className="w-4 h-4 shrink-0 text-emerald-600" />
-          <span className="hidden sm:inline">Master Data Peserta</span>
-          <span className="sm:hidden">Master Data</span>
-        </button>
-
-        <button
           onClick={() => setAdminTab('rekap')}
-          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             adminTab === 'rekap'
               ? 'bg-white text-emerald-700 shadow-xs'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
           <BarChart3 className="w-4 h-4 shrink-0 text-emerald-600" />
-          <span className="hidden sm:inline">Rekap Per Unit (14 Unit)</span>
-          <span className="sm:hidden">Rekap Unit</span>
+          <span className="hidden sm:inline">Rekap Kehadiran & Konsumsi</span>
+          <span className="sm:hidden">Rekap Konsumsi</span>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('master')}
+          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            adminTab === 'master'
+              ? 'bg-white text-emerald-700 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <LayoutDashboard className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span className="hidden sm:inline">Master Data Peserta ({filteredGuests.length})</span>
+          <span className="sm:hidden">Data Peserta</span>
         </button>
 
         {pendingGuests.length > 0 && (
           <button
             onClick={() => setAdminTab('pending')}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all relative ${
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all relative cursor-pointer ${
               adminTab === 'pending'
                 ? 'bg-white text-amber-600 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -495,91 +530,282 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         )}
       </div>
 
-      {adminTab === 'guestbook' ? (
-        <Guestbook
-          guests={guests}
-          isLoading={isLoading}
-          onCheckIn={onCheckInToggle}
-          onAddWalkIn={onCreateGuest}
-        />
-      ) : adminTab === 'rekap' ? (
-        /* REKAP KEHADIRAN PER UNIT */
-        <div className="space-y-4 text-left">
+      {adminTab === 'rekap' ? (
+        /* REKAP KEHADIRAN & KONSUMSI PER UNIT & INSTANSI */
+        <div className="space-y-4 sm:space-y-6 text-left">
+          
+          {/* Header Rekap */}
           <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <span className="p-2 rounded-xl bg-emerald-100 text-emerald-700">
+                <span className="p-2 rounded-xl bg-emerald-100 text-emerald-800">
                   <BarChart3 className="w-5 h-5" />
                 </span>
-                <h2 className="text-base sm:text-lg font-black text-slate-900">
-                  Rekap Kehadiran Per Unit & Lembaga
-                </h2>
+                <div>
+                  <h2 className="text-base sm:text-lg font-black text-slate-900">
+                    Rekapitulasi Kehadiran & Konsumsi Natal
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Data porsi konsumsi dan jumlah peserta per instansi: SKI (12 Unit), Yayasan YGPKB, dan ITBSS.
+                  </p>
+                </div>
               </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Distribusi kehadiran SKI, Yayasan Gereja Protestan Kampung Bali, dan ITBSS.
-              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-bold text-emerald-800">
-                Total Hadir: {kpis.checkedInCount} / {kpis.hadirCount} Peserta
+            
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="px-3.5 py-2 bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-black shadow-xs flex items-center gap-1.5">
+                <Utensils className="w-4 h-4 text-emerald-200" />
+                <span>Total Konsumsi: {kpis.totalPaxHadir} Porsi</span>
               </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
-            {unitStats.map((item) => (
-              <div
-                key={item.unit}
-                className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-5 flex flex-col justify-between hover:border-emerald-300 transition-all"
-              >
+          {/* 3 Kategori Utama Rekap Instansi (SKI, Yayasan, ITBSS) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
+            
+            {/* 1. SKI */}
+            <div className="bg-white rounded-2xl border-2 border-emerald-100 p-4 sm:p-5 shadow-xs hover:border-emerald-300 transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                    <School className="w-3 h-3 text-emerald-700" />
+                    <span>12 Unit Sekolah</span>
+                  </span>
+                  <span className="text-xs font-semibold text-slate-400">SKI</span>
+                </div>
+                <h3 className="text-lg font-black text-slate-900 mb-1">
+                  Sekolah Kristen Immanuel
+                </h3>
+                <p className="text-xs text-slate-500 mb-4">
+                  Guru, Tenaga Kependidikan, dan Staf 12 Unit SKI
+                </p>
+              </div>
+
+              <div className="bg-emerald-50/80 p-3 rounded-xl border border-emerald-200/80 mb-3 flex items-center justify-between">
                 <div>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
-                      item.category === 'yayasan'
-                        ? 'bg-purple-100 text-purple-700'
-                        : item.category === 'itbss'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-emerald-100 text-emerald-800'
-                    }`}>
-                      {item.category === 'yayasan' ? 'Yayasan' : item.category === 'itbss' ? 'Perguruan Tinggi' : 'Unit Sekolah'}
-                    </span>
-                    <span className="text-xs font-bold text-slate-400">
-                      {item.checkInRate}% Tiba
-                    </span>
-                  </div>
-
-                  <h3 className="font-extrabold text-slate-900 text-base leading-tight mb-2">
-                    {item.unit}
-                  </h3>
-
-                  {/* Progress Bar */}
-                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-3">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        item.checkInRate >= 80 ? 'bg-emerald-500' : item.checkInRate >= 40 ? 'bg-teal-500' : 'bg-amber-500'
-                      }`}
-                      style={{ width: `${item.checkInRate}%` }}
-                    />
+                  <span className="text-[10px] font-bold text-emerald-800 uppercase block">Porsi Konsumsi SKI</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black text-emerald-700">{kpis.sekolahPax}</span>
+                    <span className="text-xs text-emerald-600 font-semibold">Porsi</span>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 text-center text-xs">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 block uppercase">Terdaftar</span>
-                    <span className="font-black text-slate-800 text-sm">{item.totalRegistered}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 block uppercase">Bisa Hadir</span>
-                    <span className="font-black text-slate-800 text-sm">{item.hadirCount}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-emerald-600 block uppercase">Sudah Tiba</span>
-                    <span className="font-black text-emerald-600 text-sm">{item.checkedInCount}</span>
-                  </div>
+                <div className="w-10 h-10 rounded-xl bg-emerald-200/60 flex items-center justify-center text-emerald-800">
+                  <Utensils className="w-5 h-5" />
                 </div>
               </div>
-            ))}
+
+              <div className="grid grid-cols-3 gap-1 pt-2 border-t border-slate-100 text-center text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Terdaftar</span>
+                  <span className="font-bold text-slate-800">{kpis.sekolahCount}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-emerald-600 uppercase font-bold block">Hadir</span>
+                  <span className="font-black text-emerald-700">{kpis.sekolahHadirCount}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-rose-500 uppercase font-bold block">Berhalangan</span>
+                  <span className="font-bold text-rose-600">{kpis.sekolahTidakHadir}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Yayasan YGPKB */}
+            <div className="bg-white rounded-2xl border-2 border-purple-100 p-4 sm:p-5 shadow-xs hover:border-purple-300 transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-100 text-purple-800 flex items-center gap-1">
+                    <Church className="w-3 h-3 text-purple-700" />
+                    <span>Yayasan</span>
+                  </span>
+                  <span className="text-xs font-semibold text-slate-400">YGPKB</span>
+                </div>
+                <h3 className="text-lg font-black text-slate-900 mb-1">
+                  Yayasan Gereja Protestan KB
+                </h3>
+                <p className="text-xs text-slate-500 mb-4">
+                  Pengurus Yayasan, Majelis Gereja & Staf
+                </p>
+              </div>
+
+              <div className="bg-purple-50/80 p-3 rounded-xl border border-purple-200/80 mb-3 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-purple-800 uppercase block">Porsi Konsumsi Yayasan</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black text-purple-700">{kpis.yayasanPax}</span>
+                    <span className="text-xs text-purple-600 font-semibold">Porsi</span>
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-purple-200/60 flex items-center justify-center text-purple-800">
+                  <Utensils className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-1 pt-2 border-t border-slate-100 text-center text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Terdaftar</span>
+                  <span className="font-bold text-slate-800">{kpis.yayasanCount}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-purple-600 uppercase font-bold block">Hadir</span>
+                  <span className="font-black text-purple-700">{kpis.yayasanHadirCount}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-rose-500 uppercase font-bold block">Berhalangan</span>
+                  <span className="font-bold text-rose-600">{kpis.yayasanTidakHadir}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. ITBSS */}
+            <div className="bg-white rounded-2xl border-2 border-blue-100 p-4 sm:p-5 shadow-xs hover:border-blue-300 transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-800 flex items-center gap-1">
+                    <GraduationCap className="w-3 h-3 text-blue-700" />
+                    <span>Institut</span>
+                  </span>
+                  <span className="text-xs font-semibold text-slate-400">ITBSS</span>
+                </div>
+                <h3 className="text-lg font-black text-slate-900 mb-1">
+                  Institut Sabda Setia
+                </h3>
+                <p className="text-xs text-slate-500 mb-4">
+                  Dosen, Tenaga Pendidik & Staf ITBSS
+                </p>
+              </div>
+
+              <div className="bg-blue-50/80 p-3 rounded-xl border border-blue-200/80 mb-3 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-blue-800 uppercase block">Porsi Konsumsi ITBSS</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black text-blue-700">{kpis.itbssPax}</span>
+                    <span className="text-xs text-blue-600 font-semibold">Porsi</span>
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-blue-200/60 flex items-center justify-center text-blue-800">
+                  <Utensils className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-1 pt-2 border-t border-slate-100 text-center text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Terdaftar</span>
+                  <span className="font-bold text-slate-800">{kpis.itbssCount}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-blue-600 uppercase font-bold block">Hadir</span>
+                  <span className="font-black text-blue-700">{kpis.itbssHadirCount}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-rose-500 uppercase font-bold block">Berhalangan</span>
+                  <span className="font-bold text-rose-600">{kpis.itbssTidakHadir}</span>
+                </div>
+              </div>
+            </div>
+
           </div>
+
+          {/* Rincian Detail Per Unit (12 Unit SKI + YGPKB + ITBSS) */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="font-black text-slate-900 text-base">
+                  Rincian Kehadiran & Konsumsi Per Unit (14 Unit)
+                </h3>
+                <p className="text-xs text-slate-500">
+                  12 Unit Persekolahan SKI dipisah per unit, ditambah Yayasan YGPKB dan ITBSS.
+                </p>
+              </div>
+              <span className="text-xs text-slate-400 font-medium self-start sm:self-auto">
+                Total 14 Lembaga / Unit
+              </span>
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 text-[11px] uppercase tracking-wider">
+                  <tr>
+                    <th className="px-4 py-3">No</th>
+                    <th className="px-4 py-3">Asal Unit / Lembaga</th>
+                    <th className="px-4 py-3">Kategori</th>
+                    <th className="px-4 py-3 text-center">Pendaftar Hadir</th>
+                    <th className="px-4 py-3 text-center bg-emerald-50/60 text-emerald-900">Total Porsi Konsumsi</th>
+                    <th className="px-4 py-3 text-center">Berhalangan</th>
+                    <th className="px-4 py-3 text-center">Total Form</th>
+                    <th className="px-4 py-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {unitStats.map((item, idx) => (
+                    <tr key={item.unit} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-4 py-3 text-slate-400 font-semibold">{idx + 1}</td>
+                      <td className="px-4 py-3 font-extrabold text-slate-900">
+                        {item.unit}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
+                          item.category === 'yayasan'
+                            ? 'bg-purple-100 text-purple-700'
+                            : item.category === 'itbss'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {item.category === 'yayasan' ? 'Yayasan' : item.category === 'itbss' ? 'ITBSS' : 'Unit SKI'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center font-bold text-slate-800">
+                        {item.hadirCount} Peserta
+                      </td>
+                      <td className="px-4 py-3 text-center font-black text-emerald-700 bg-emerald-50/40 text-sm">
+                        {item.totalPax} Porsi
+                      </td>
+                      <td className="px-4 py-3 text-center text-rose-500 font-semibold">
+                        {item.tidakHadirCount}
+                      </td>
+                      <td className="px-4 py-3 text-center text-slate-500 font-medium">
+                        {item.totalRegistered}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => {
+                            setCategoryFilter(item.category);
+                            setUnitFilter(item.unit);
+                            setAdminTab('master');
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-600 text-xs font-bold transition-all cursor-pointer"
+                        >
+                          Lihat Data →
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-slate-50 border-t-2 border-slate-200 font-black text-xs sm:text-sm text-slate-900">
+                  <tr>
+                    <td colSpan={3} className="px-4 py-3.5 text-right uppercase tracking-wider">
+                      TOTAL KESELURUHAN:
+                    </td>
+                    <td className="px-4 py-3.5 text-center text-slate-900">
+                      {kpis.hadirCount} Peserta
+                    </td>
+                    <td className="px-4 py-3.5 text-center text-emerald-700 text-base bg-emerald-100/50">
+                      {kpis.totalPaxHadir} Porsi
+                    </td>
+                    <td className="px-4 py-3.5 text-center text-rose-600">
+                      {kpis.tidakHadirCount}
+                    </td>
+                    <td className="px-4 py-3.5 text-center text-slate-900">
+                      {kpis.total} Form
+                    </td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
         </div>
       ) : adminTab === 'pending' ? (
         /* PENDING TAB */
@@ -681,60 +907,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       ) : (
         /* MASTER DATA TAB */
         <>
-          {/* KPI Cards Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5 mb-4 sm:mb-6">
-            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
-              <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Terdaftar</p>
-              <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
-                <span className="text-xl sm:text-2xl font-black text-slate-900">{kpis.total}</span>
-                <span className="text-[11px] sm:text-xs text-slate-400">Orang</span>
-              </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">SKI, Yayasan, ITBSS</p>
-            </div>
-
-            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
-              <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Bisa Hadir</p>
-              <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
-                <span className="text-xl sm:text-2xl font-black text-emerald-600">{kpis.hadirCount}</span>
-                <span className="text-[11px] sm:text-xs text-slate-400">Peserta</span>
-              </div>
-              <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-1.5 flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3 shrink-0" /> Terkonfirmasi Hadir
-              </p>
-            </div>
-
-            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs bg-linear-to-br from-emerald-50/50 to-white">
-              <p className="text-[10px] sm:text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Pax Konsumsi</p>
-              <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
-                <span className="text-xl sm:text-2xl font-black text-emerald-700">{kpis.totalPaxHadir}</span>
-                <span className="text-[11px] sm:text-xs text-emerald-600">Porsi</span>
-              </div>
-              <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-1.5 flex items-center gap-1">
-                <Utensils className="w-3 h-3 shrink-0" /> Konsumsi Natal
-              </p>
-            </div>
-
-            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
-              <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sudah Tiba</p>
-              <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
-                <span className="text-xl sm:text-2xl font-black text-teal-600">{kpis.checkedInCount}</span>
-                <span className="text-[11px] sm:text-xs text-slate-400">/ {kpis.hadirCount}</span>
-              </div>
-              <p className="text-[10px] sm:text-[11px] text-teal-600 font-medium mt-1.5 flex items-center gap-1">
-                <Clock className="w-3 h-3 shrink-0" /> {ENABLE_QR_SCAN ? 'Presensi QR' : 'Tercatat Hadir'}
-              </p>
-            </div>
-
-            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs col-span-2 sm:col-span-1">
-              <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Berhalangan</p>
-              <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1">
-                <span className="text-xl sm:text-2xl font-black text-rose-500">{kpis.tidakHadirCount}</span>
-                <span className="text-[11px] sm:text-xs text-slate-400">Orang</span>
-              </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5">Tidak dapat hadir</p>
-            </div>
-          </div>
-
           {/* Filter and Search Bar */}
           <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 sm:gap-3">
             <div className="relative w-full md:w-72">
@@ -748,7 +920,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 w-full md:w-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full md:w-auto">
               {/* Category */}
               <select
                 value={categoryFilter}
@@ -770,7 +942,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 onChange={(e) => setUnitFilter(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
               >
-                <option value="all">Semua Unit</option>
+                <option value="all">Semua Unit (14)</option>
                 {categoryFilter === 'all' || categoryFilter === 'sekolah' ? (
                   <optgroup label="SKI (12 Unit)">
                     {SCHOOL_UNITS.map((u) => (
@@ -799,17 +971,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <option value="all">Semua Status</option>
                 <option value="hadir">Bisa Hadir</option>
                 <option value="tidak_hadir">Berhalangan</option>
-              </select>
-
-              {/* Check-In */}
-              <select
-                value={checkInFilter}
-                onChange={(e) => setCheckInFilter(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
-              >
-                <option value="all">Semua Presensi</option>
-                <option value="checked_in">Sudah Check-In</option>
-                <option value="not_checked_in">Belum Check-In</option>
               </select>
             </div>
           </div>
@@ -890,29 +1051,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </div>
                     )}
 
-                    {/* Presensi Check-In Button */}
-                    {isAttending && (
-                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
-                        <div className="text-[11px]">
-                          <span className="text-slate-400">Presensi: </span>
-                          {guest.is_checked_in ? (
-                            <span className="font-bold text-teal-700">✓ Sudah Hadir</span>
-                          ) : (
-                            <span className="font-semibold text-slate-500">Belum Hadir</span>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => onCheckInToggle(guest.id, !guest.is_checked_in)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${
-                            guest.is_checked_in
-                              ? 'bg-teal-50 text-teal-700 border-teal-300 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
-                              : 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 shadow-xs'
-                          }`}
-                        >
-                          {guest.is_checked_in ? 'Batalkan Presensi' : '+ Catat Hadir'}
-                        </button>
-                      </div>
-                    )}
+                    {/* Porsi Konsumsi */}
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
+                      <span className="text-slate-500 font-medium flex items-center gap-1">
+                        <Utensils className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Porsi Konsumsi:</span>
+                      </span>
+                      {isAttending ? (
+                        <span className="font-extrabold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                          {guest.attendee_count || 1} Porsi (Orang)
+                        </span>
+                      ) : (
+                        <span className="font-semibold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-200">
+                          0 Porsi
+                        </span>
+                      )}
+                    </div>
 
                     {/* Action Buttons Toolbar */}
                     <div className={`grid ${ENABLE_QR_SCAN ? 'grid-cols-4' : 'grid-cols-3'} gap-1.5 pt-2 border-t border-slate-100`}>
@@ -960,28 +1114,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm">
-                <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 text-[11px] uppercase tracking-wider">
+                <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 text-[11px] uppercase tracking-wider">
                   <tr>
                     <th className="px-4 py-3.5">Kategori & Unit</th>
                     <th className="px-4 py-3.5">Nama & Kontak</th>
                     <th className="px-4 py-3.5 text-center">Status</th>
-                    <th className="px-4 py-3.5 text-center">Pax</th>
+                    <th className="px-4 py-3.5 text-center bg-emerald-50/70 text-emerald-900">Porsi Konsumsi</th>
                     <th className="px-4 py-3.5">Catatan</th>
-                    <th className="px-4 py-3.5 text-center">Presensi</th>
                     <th className="px-4 py-3.5 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {isLoading ? (
                     <tr>
-                      <td colSpan={7} className="text-center py-12 text-slate-400">
+                      <td colSpan={6} className="text-center py-12 text-slate-400">
                         <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                         Memuat data peserta...
                       </td>
                     </tr>
                   ) : filteredGuests.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="text-center py-12 text-slate-400">
+                      <td colSpan={6} className="text-center py-12 text-slate-400">
                         Tidak ada data peserta yang cocok dengan filter.
                       </td>
                     </tr>
@@ -1036,9 +1189,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             )}
                           </td>
 
-                          {/* Pax */}
-                          <td className="px-4 py-3.5 text-center font-bold text-slate-700">
-                            {guest.attendance_status === 'tidak_hadir' ? '-' : `${guest.attendee_count} pax`}
+                          {/* Pax Konsumsi */}
+                          <td className="px-4 py-3.5 text-center whitespace-nowrap bg-emerald-50/20">
+                            {guest.attendance_status === 'tidak_hadir' ? (
+                              <span className="text-slate-400 font-medium">-</span>
+                            ) : (
+                              <span className="font-black text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-lg border border-emerald-200 text-xs inline-flex items-center gap-1">
+                                <Utensils className="w-3 h-3 text-emerald-600" />
+                                <span>{guest.attendee_count || 1} Porsi</span>
+                              </span>
+                            )}
                           </td>
 
                           {/* Catatan */}
@@ -1047,24 +1207,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               <p className="text-xs text-slate-600 line-clamp-2">{guest.notes}</p>
                             ) : (
                               <span className="text-xs text-slate-400">-</span>
-                            )}
-                          </td>
-
-                          {/* Presensi Check-In */}
-                          <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                            {guest.attendance_status === 'tidak_hadir' ? (
-                              <span className="text-xs text-slate-400 italic">-</span>
-                            ) : (
-                              <button
-                                onClick={() => onCheckInToggle(guest.id, !guest.is_checked_in)}
-                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
-                                  guest.is_checked_in
-                                    ? 'bg-teal-50 text-teal-700 border-teal-300 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300'
-                                    : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-emerald-600 hover:text-white hover:border-emerald-600'
-                                }`}
-                              >
-                                {guest.is_checked_in ? '✓ Sudah Hadir' : '+ Catat Hadir'}
-                              </button>
                             )}
                           </td>
 
@@ -1287,6 +1429,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </select>
               </div>
 
+              {formData.attendance_status === 'hadir' && (
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Jumlah Kehadiran (Porsi Konsumsi) *
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={formData.attendee_count || 1}
+                    onChange={(e) => setFormData({ ...formData, attendee_count: Math.max(1, parseInt(e.target.value) || 1) })}
+                    required
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 outline-none font-bold text-slate-800"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Digunakan untuk rekapitulasi porsi konsumsi acara Natal.
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Catatan</label>
                 <textarea
@@ -1370,16 +1532,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               )}
 
-              <div>
-                <p className="text-slate-400 text-[10px] uppercase font-bold">Status Presensi</p>
-                <p className="mt-0.5">
-                  {viewingGuest.is_checked_in ? (
-                    <span className="text-emerald-700 font-bold">
-                      ✓ Sudah Presensi ({viewingGuest.checked_in_at ? new Date(viewingGuest.checked_in_at).toLocaleTimeString('id-ID') : ''} WIB)
-                    </span>
-                  ) : (
-                    <span className="text-slate-400 italic">Belum hadir di lokasi</span>
-                  )}
+              <div className="bg-emerald-50/80 p-3 rounded-xl border border-emerald-200">
+                <p className="text-slate-500 text-[10px] uppercase font-bold">Jumlah Kehadiran (Porsi Konsumsi)</p>
+                <p className="text-emerald-800 font-extrabold text-sm mt-0.5 flex items-center gap-1.5">
+                  <Utensils className="w-4 h-4 text-emerald-600" />
+                  <span>
+                    {viewingGuest.attendance_status === 'hadir'
+                      ? `${viewingGuest.attendee_count || 1} Orang (Porsi)`
+                      : '0 Orang (Berhalangan)'}
+                  </span>
                 </p>
               </div>
             </div>

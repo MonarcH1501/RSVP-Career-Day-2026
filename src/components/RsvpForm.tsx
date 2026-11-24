@@ -8,7 +8,6 @@ import {
   Send, 
   Sparkles,
   Calendar,
-  Printer,
   RotateCcw,
   Church,
   Download,
@@ -301,16 +300,6 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
                 </div>
               )}
             </div>
-
-            <div className="mt-6 pt-4 border-t border-slate-100">
-              <button
-                onClick={resetForm}
-                className="w-full inline-flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-200 transition-all active:scale-[0.98]"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>Isi Formulir untuk Rekan Lain</span>
-              </button>
-            </div>
           </div>
         </div>
       );
@@ -547,25 +536,6 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">No. WhatsApp</p>
                 <p className="font-bold text-slate-800 mt-0.5 text-xs">{submittedGuest.pic_phone}</p>
               </div>
-            </div>
-
-            {/* Actions */}
-            <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
-              <button
-                onClick={() => window.print()}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold shadow-xs transition-all active:scale-[0.98]"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                Cetak / Simpan Tiket
-              </button>
-              
-              <button
-                onClick={resetForm}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-sm shadow-emerald-200 transition-all active:scale-[0.98]"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Isi Presensi untuk Rekan Lain
-              </button>
             </div>
 
           </div>

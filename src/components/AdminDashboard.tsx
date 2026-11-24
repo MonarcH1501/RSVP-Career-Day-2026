@@ -1443,8 +1443,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     required
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 outline-none font-bold text-slate-800"
                   />
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Digunakan untuk rekapitulasi porsi konsumsi acara Natal.
+                  <p className="text-[11px] text-amber-700 font-medium mt-1">
+                    *Catatan: Hanya pasangan (suami/istri) dan anak yang dapat dihitung hadir.
                   </p>
                 </div>
               )}

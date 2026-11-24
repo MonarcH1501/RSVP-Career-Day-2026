@@ -856,6 +856,17 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
                   Orang
                 </span>
               </div>
+
+              {/* Note khusus aturan perhitungan kehadiran */}
+              <div className="flex items-start gap-2 p-2.5 sm:p-3 rounded-xl bg-amber-50/90 border border-amber-200/80 text-amber-900 text-[11px] sm:text-xs leading-relaxed">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-amber-800">Catatan: </span>
+                  <span>
+                    Hanya pasangan (<span className="font-semibold">suami/istri</span>) dan <span className="font-semibold">anak</span> yang dapat dihitung hadir.
+                  </span>
+                </div>
+              </div>
             </div>
           )}
         </div>

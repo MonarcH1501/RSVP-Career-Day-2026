@@ -575,57 +575,57 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-4 sm:py-8 px-3 sm:px-6 text-left">
+    <div className="max-w-3xl mx-auto py-3.5 sm:py-8 px-2 sm:px-6 text-left">
       
       {/* Event Header Banner (Christmas Theme) */}
-      <div className="bg-linear-to-br from-emerald-950 via-teal-900 to-slate-900 text-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl relative overflow-hidden mb-6 sm:mb-8 border border-emerald-800/40">
+      <div className="bg-linear-to-br from-emerald-950 via-teal-900 to-slate-900 text-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl relative overflow-hidden mb-4 sm:mb-8 border border-emerald-800/40">
         <div className="absolute -right-12 -top-12 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -left-12 -bottom-12 w-64 h-64 bg-rose-500/15 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[11px] sm:text-xs font-semibold text-emerald-200 mb-3">
+          <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] sm:text-xs font-semibold text-emerald-200 mb-2.5 sm:mb-3">
             <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
             <span>Presensi Kehadiran Internal Acara Natal</span>
           </div>
 
-          <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white leading-tight">
+          <h1 className="text-lg sm:text-3xl lg:text-4xl font-black tracking-tight text-white leading-snug sm:leading-tight">
             Perayaan Natal Bersama <br className="hidden sm:inline" />
             <span className="text-transparent bg-clip-text bg-linear-to-r from-amber-300 via-emerald-200 to-teal-200">
               YGPKB, SKI & ITBSS
             </span>
           </h1>
 
-          <p className="mt-2.5 text-slate-200 text-xs sm:text-sm leading-relaxed max-w-2xl">
+          <p className="mt-2 text-slate-200 text-xs sm:text-sm leading-relaxed max-w-2xl">
             {ENABLE_QR_SCAN
               ? 'Sistem konfirmasi kehadiran dan e-tiket QR Code internal untuk Bapak/Ibu Guru, Dosen, Tenaga Kependidikan, Staf, serta Pengurus Yayasan.'
               : 'Sistem formulir pendataan dan konfirmasi kehadiran untuk Bapak/Ibu Guru, Dosen, Tenaga Kependidikan, Staf, serta Pengurus Yayasan.'}
           </p>
 
-          <p className="text-[11px] text-emerald-200 bg-white/10 px-3 py-1.5 rounded-xl border border-white/10 mt-3 inline-block">
+          <p className="text-[11px] text-emerald-200 bg-white/10 px-3 py-1.5 rounded-xl border border-white/10 mt-2.5 sm:mt-3 inline-block leading-relaxed">
             {ENABLE_QR_SCAN
               ? 'ℹ️ Setiap peserta mengisi 1 formulir untuk mendapatkan QR Code tiket presensi pribadi yang akan discan saat tiba di lokasi.'
               : 'ℹ️ Silakan mengisi formulir di bawah ini untuk konfirmasi kehadiran Anda pada acara Perayaan Natal Bersama.'}
           </p>
 
           {/* Details Bar */}
-          <div className="mt-4 pt-4 border-t border-white/15 grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs text-slate-200">
-            <div className="flex items-center gap-2.5 bg-white/5 sm:bg-transparent p-2.5 sm:p-0 rounded-xl border border-white/10 sm:border-0">
+          <div className="mt-3.5 pt-3.5 sm:mt-4 sm:pt-4 border-t border-white/15 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs text-slate-200">
+            <div className="flex items-center gap-2.5 bg-white/5 sm:bg-transparent p-2 sm:p-0 rounded-xl border border-white/10 sm:border-0">
               <div className="w-8 h-8 rounded-xl bg-emerald-400/20 text-emerald-300 flex items-center justify-center shrink-0">
                 <Church className="w-4 h-4" />
               </div>
               <div className="min-w-0">
                 <p className="text-[9px] text-emerald-300 font-bold uppercase tracking-wider">LEMBAGA PENYELENGGARA</p>
-                <p className="font-bold text-white text-xs truncate">Yayasan Gereja Protestan Kampung Bali (YGPKB)</p>
+                <p className="font-bold text-white text-xs leading-snug">Yayasan Gereja Protestan Kampung Bali (YGPKB)</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 bg-white/5 sm:bg-transparent p-2.5 sm:p-0 rounded-xl border border-white/10 sm:border-0">
+            <div className="flex items-center gap-2.5 bg-white/5 sm:bg-transparent p-2 sm:p-0 rounded-xl border border-white/10 sm:border-0">
               <div className="w-8 h-8 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center shrink-0">
                 <School className="w-4 h-4" />
               </div>
               <div className="min-w-0">
                 <p className="text-[9px] text-amber-300 font-bold uppercase tracking-wider">UNIT PARTISIPAN</p>
-                <p className="font-bold text-white text-xs">SKI & Kampus ITBSS</p>
+                <p className="font-bold text-white text-xs leading-snug">SKI (12 Unit) & Kampus ITBSS</p>
               </div>
             </div>
           </div>
@@ -672,7 +672,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
       )}
 
       {/* Main Form Card */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl sm:rounded-3xl shadow-lg border border-slate-200 p-4 sm:p-8 space-y-5 sm:space-y-6">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl sm:rounded-3xl shadow-lg border border-slate-200 p-3.5 sm:p-8 space-y-4 sm:space-y-6">
         
         {errorMessage && (
           <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm flex items-start gap-2.5">
@@ -685,7 +685,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
         )}
 
         {/* 1. DATA DIRI PESERTA (Nama & No. WhatsApp) */}
-        <div className="space-y-3.5 sm:space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div className="border-b border-slate-100 pb-2">
             <label className="block text-xs sm:text-sm font-extrabold text-slate-800">
               Identitas Peserta <span className="text-rose-500">*</span>
@@ -709,7 +709,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
                 onChange={handleChange}
                 placeholder="Contoh: Bpk. Yohanes / Ibu Maria, S.Pd"
                 required
-                className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white font-medium"
+                className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white font-medium"
               />
             </div>
           </div>
@@ -728,7 +728,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
                 onChange={handleChange}
                 placeholder="Contoh: 081234567890"
                 required
-                className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white font-medium"
+                className="w-full pl-10 pr-3.5 py-2.5 sm:py-3 rounded-xl border border-slate-300 text-base sm:text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white font-medium"
               />
             </div>
           </div>
@@ -821,7 +821,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
                 <button
                   type="button"
                   onClick={() => setFormData((prev) => ({ ...prev, attendee_count: Math.max(1, (prev.attendee_count || 1) - 1) }))}
-                  className="w-10 h-10 rounded-xl bg-white hover:bg-slate-100 text-slate-700 font-extrabold text-base flex items-center justify-center border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-black text-xl flex items-center justify-center border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
                   title="Kurang"
                 >
                   -
@@ -839,20 +839,20 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
                       setFormData((prev) => ({ ...prev, attendee_count: isNaN(val) ? 1 : Math.max(1, val) }));
                     }}
                     required
-                    className="w-full text-center py-2 rounded-xl border border-emerald-300 text-base font-extrabold text-slate-900 bg-white focus:ring-2 focus:ring-emerald-200 outline-none shadow-2xs"
+                    className="w-full h-11 sm:h-12 text-center rounded-xl border border-emerald-300 text-lg font-black text-slate-900 bg-white focus:ring-2 focus:ring-emerald-200 outline-none shadow-2xs"
                   />
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setFormData((prev) => ({ ...prev, attendee_count: (prev.attendee_count || 1) + 1 }))}
-                  className="w-10 h-10 rounded-xl bg-white hover:bg-slate-100 text-slate-700 font-extrabold text-base flex items-center justify-center border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-black text-xl flex items-center justify-center border border-slate-300 shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
                   title="Tambah"
                 >
                   +
                 </button>
 
-                <span className="px-3.5 py-2 bg-emerald-100/90 text-emerald-900 rounded-xl text-xs sm:text-sm font-extrabold border border-emerald-200/90 shrink-0">
+                <span className="h-11 sm:h-12 px-3.5 sm:px-4 bg-emerald-100/90 text-emerald-900 rounded-xl text-xs sm:text-sm font-extrabold border border-emerald-200/90 shrink-0 flex items-center justify-center">
                   Orang
                 </span>
               </div>
@@ -880,62 +880,62 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
             Tentukan unit asal tempat Anda bertugas / bernaung
           </p>
           
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 mb-4">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-3 mb-3.5 sm:mb-4">
             {/* 1. Unit Sekolah (SKI) */}
             <button
               type="button"
               onClick={() => handleCategorySelect('sekolah')}
-              className={`p-3 sm:p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer ${
+              className={`p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1 sm:gap-1.5 cursor-pointer min-h-[78px] ${
                 selectedCategoryKey === 'sekolah'
                   ? 'bg-emerald-50/90 border-emerald-600 text-emerald-900 font-extrabold ring-2 ring-emerald-500/20 shadow-xs'
                   : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
-              <School className="w-5 h-5 text-emerald-700 shrink-0" />
-              <span className="text-xs font-bold">SKI</span>
-              <span className="text-[10px] text-emerald-600 font-semibold">12 Unit Persekolahan</span>
+              <School className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-700 shrink-0" />
+              <span className="text-xs sm:text-sm font-extrabold">SKI</span>
+              <span className="text-[9px] sm:text-[10px] text-emerald-600 font-semibold leading-tight">12 Unit Persekolahan</span>
             </button>
 
             {/* 2. Yayasan YGPKB */}
             <button
               type="button"
               onClick={() => handleCategorySelect('yayasan')}
-              className={`p-3 sm:p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer ${
+              className={`p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1 sm:gap-1.5 cursor-pointer min-h-[78px] ${
                 selectedCategoryKey === 'yayasan'
                   ? 'bg-purple-50/90 border-purple-600 text-purple-900 font-extrabold ring-2 ring-purple-500/20 shadow-xs'
                   : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
-              <Church className="w-5 h-5 text-purple-700 shrink-0" />
-              <span className="text-xs font-bold">Yayasan (YGPKB)</span>
-              <span className="text-[10px] text-purple-600 font-semibold">Gereja & Pengurus</span>
+              <Church className="w-4 h-4 sm:w-5 sm:h-5 text-purple-700 shrink-0" />
+              <span className="text-xs sm:text-sm font-extrabold">Yayasan</span>
+              <span className="text-[9px] sm:text-[10px] text-purple-600 font-semibold leading-tight">YGPKB & Pengurus</span>
             </button>
 
             {/* 3. ITBSS */}
             <button
               type="button"
               onClick={() => handleCategorySelect('itbss')}
-              className={`p-3 sm:p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer ${
+              className={`p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1 sm:gap-1.5 cursor-pointer min-h-[78px] ${
                 selectedCategoryKey === 'itbss'
                   ? 'bg-blue-50/90 border-blue-600 text-blue-900 font-extrabold ring-2 ring-blue-500/20 shadow-xs'
                   : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
-              <GraduationCap className="w-5 h-5 text-blue-700 shrink-0" />
-              <span className="text-xs font-bold">ITBSS</span>
-              <span className="text-[10px] text-blue-600 font-semibold">Institut Sabda Setia</span>
+              <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-blue-700 shrink-0" />
+              <span className="text-xs sm:text-sm font-extrabold">ITBSS</span>
+              <span className="text-[9px] sm:text-[10px] text-blue-600 font-semibold leading-tight">Sabda Setia</span>
             </button>
           </div>
 
           {/* SUB-SELEKSI KHUSUS UNIT SEKOLAH: 12 UNIT */}
           {selectedCategoryKey === 'sekolah' && (
-            <div className="bg-emerald-50/60 p-3.5 sm:p-4 rounded-2xl border border-emerald-200/80 animate-in fade-in duration-200">
-              <label className="block text-xs font-bold text-emerald-950 mb-2 flex items-center justify-between">
+            <div className="bg-emerald-50/60 p-3 sm:p-4 rounded-2xl border border-emerald-200/80 animate-in fade-in duration-200">
+              <label className="block text-xs font-bold text-emerald-950 mb-2.5 flex items-center justify-between">
                 <span>Pilih Unit SKI Anda (12 Unit):</span>
                 <span className="text-[11px] font-extrabold text-emerald-700">Terpilih: {selectedUnit}</span>
               </label>
 
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+              <div className="grid grid-cols-2 min-[360px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-1.5 sm:gap-2">
                 {SCHOOL_UNITS.map((unit) => {
                   const isSelected = selectedUnit === unit;
                   return (
@@ -943,7 +943,7 @@ export const RsvpForm: React.FC<RsvpFormProps> = ({ guests = [], onSubmitRsvp })
                       key={unit}
                       type="button"
                       onClick={() => handleUnitSelect(unit)}
-                      className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all text-center border cursor-pointer ${
+                      className={`min-h-[44px] py-2 px-1.5 sm:px-2.5 rounded-xl text-xs font-bold transition-all text-center border cursor-pointer flex items-center justify-center ${
                         isSelected
                           ? 'bg-emerald-700 text-white border-emerald-800 shadow-xs scale-[1.02]'
                           : 'bg-white text-slate-700 border-emerald-200 hover:bg-emerald-100/50'

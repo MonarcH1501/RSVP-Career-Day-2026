@@ -722,8 +722,88 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </span>
             </div>
 
+            {/* MOBILE VIEW FOR REKAP (< md) */}
+            <div className="block md:hidden divide-y divide-slate-100 bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              {unitStats.map((item, idx) => (
+                <div key={item.unit} className="p-3.5 space-y-2.5 hover:bg-slate-50/70 transition-colors">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold flex items-center justify-center shrink-0">
+                        {idx + 1}
+                      </span>
+                      <h4 className="font-extrabold text-slate-900 text-sm truncate">
+                        {item.unit}
+                      </h4>
+                    </div>
+                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md shrink-0 ${
+                      item.category === 'yayasan'
+                        ? 'bg-purple-100 text-purple-700'
+                        : item.category === 'itbss'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {item.category === 'yayasan' ? 'Yayasan' : item.category === 'itbss' ? 'ITBSS' : 'SKI'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-center">
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Hadir</p>
+                      <p className="font-bold text-slate-800 text-xs mt-0.5">{item.hadirCount} org</p>
+                    </div>
+                    <div className="bg-emerald-50 rounded-lg py-0.5 border border-emerald-200">
+                      <p className="text-[10px] font-bold text-emerald-800 uppercase">Konsumsi</p>
+                      <p className="font-black text-emerald-700 text-xs mt-0.5">{item.totalPax} Porsi</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Berhalangan</p>
+                      <p className="font-bold text-rose-500 text-xs mt-0.5">{item.tidakHadirCount} org</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      Total Form: <strong className="text-slate-700">{item.totalRegistered}</strong>
+                    </span>
+                    <button
+                      onClick={() => {
+                        setCategoryFilter(item.category);
+                        setUnitFilter(item.unit);
+                        setAdminTab('master');
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                    >
+                      <span>Lihat Peserta</span>
+                      <span>→</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {/* Total Summary Footer for Mobile */}
+              <div className="p-3.5 bg-linear-to-r from-emerald-900 to-teal-900 text-white space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-wider text-emerald-200">
+                  TOTAL REKAPITULASI
+                </p>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-white/10 p-2 rounded-xl">
+                    <p className="text-[10px] text-emerald-200 font-medium">Pendaftar Hadir</p>
+                    <p className="font-black text-sm text-white">{kpis.hadirCount} Peserta</p>
+                  </div>
+                  <div className="bg-amber-400/20 border border-amber-300/40 p-2 rounded-xl">
+                    <p className="text-[10px] text-amber-200 font-bold">Total Konsumsi</p>
+                    <p className="font-black text-sm text-amber-300">{kpis.totalPaxHadir} Porsi</p>
+                  </div>
+                  <div className="bg-white/10 p-2 rounded-xl">
+                    <p className="text-[10px] text-emerald-200 font-medium">Berhalangan</p>
+                    <p className="font-black text-sm text-rose-300">{kpis.tidakHadirCount} Peserta</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Desktop Table View */}
-            <div className="overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm">
                 <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 text-[11px] uppercase tracking-wider">
                   <tr>
@@ -1392,7 +1472,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Nama Peserta *</label>
                   <input
@@ -1401,7 +1481,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     onChange={(e) => setFormData({ ...formData, pic_name: e.target.value })}
                     placeholder="Nama Lengkap"
                     required
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 outline-none text-base sm:text-sm"
                   />
                 </div>
                 <div>
@@ -1412,7 +1492,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     onChange={(e) => setFormData({ ...formData, pic_phone: e.target.value })}
                     placeholder="081234567890"
                     required
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 outline-none text-base sm:text-sm"
                   />
                 </div>
               </div>
